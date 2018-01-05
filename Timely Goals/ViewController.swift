@@ -60,7 +60,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
         let cell = tableView.dequeueReusableCell(withIdentifier: "TaskCell", for: indexPath) as! TaskCell
-
+        
         let item = Items[selectedUnit][indexPath.row]
         cell.TaskField.text = item.label
         cell.TaskField.placeholder = String(indexPath.row)
@@ -69,21 +69,32 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         let lpGestureRecognizer: UILongPressGestureRecognizer = UILongPressGestureRecognizer(target: self, action: #selector(didLongPressCell))
         
         // Method of identifying cells
-        let duration = 0.5 - (Double(indexPath.row) / 1000.0)
-        lpGestureRecognizer.minimumPressDuration = duration
-        
         cell.contentView.addGestureRecognizer(lpGestureRecognizer)
         return cell
     }
     
     @objc func didLongPressCell (recognizer: UILongPressGestureRecognizer) {
-         
-        let minipress = recognizer.minimumPressDuration
-        selectedCell = Int((minipress - 0.5) * -1000.0)
+       
         
         switch recognizer.state {
         case .began:
             if recognizer.view != nil  {
+                
+                for i in 0...Items[selectedUnit].count - 1 {
+                    let tableCell = tableView.cellForRow(at: IndexPath(item: i, section: 0))
+                    let neworigin = tableCell?.convert(CGPoint.zero, to: view)
+                    var newframe = tableCell?.frame
+                    newframe?.origin = neworigin!
+                    
+                    var recframe = recognizer.view?.frame
+                    let recorigin = recognizer.view?.convert(CGPoint.zero, to: view)
+                    recframe?.origin = recorigin!
+                    
+                    if (recframe?.intersects(newframe!))! {
+                        selectedCell = i
+                    }
+                }
+                
                 let label = UILabel()
                 label.translatesAutoresizingMaskIntoConstraints = false
                 label.text = Items[selectedUnit][selectedCell].label
@@ -93,8 +104,8 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 view.bringSubview(toFront: dragLabel!)
                 dragLabel?.center = recognizer.location(in: view)
                 
-                let tableCell = tableView.cellForRow(at: IndexPath(item: selectedCell, section: 0))
-                tableCell?.isHidden = true
+                let selectedTableCell = tableView.cellForRow(at: IndexPath(item: selectedCell, section: 0))
+                selectedTableCell?.isHidden = true
                 
                 view.setNeedsDisplay()
                 print("Begin")
@@ -104,8 +115,6 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         case .ended:
             if (dragLabel == nil) { return }
             
-            let tableCell = tableView.cellForRow(at: IndexPath(item: selectedCell, section: 0))
-            tableCell?.isHidden = false
             
             var isIntersection = false
             for i in 0...TimeUnits.count - 1 {
@@ -136,7 +145,14 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 dragLabel?.isHidden = true
                 dragLabel?.removeFromSuperview()
                 dragLabel = nil
-                view.setNeedsDisplay()
+                
+                // Only way to force refresh of table given the setup
+                let item = Item(label: "Dummy")
+                Items[selectedUnit].append(item)
+                tableView.insertRows(at: [IndexPath(row: 0, section: 0)], with: .none)
+                Items[selectedUnit].removeLast()
+                tableView.deleteRows(at: [IndexPath(row: 0, section: 0)], with: .none)
+
             }
             tableView.reloadData()
         default:
