@@ -10,11 +10,13 @@
 		AD8168C91FFD7810002EBC59 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD8168C81FFD7810002EBC59 /* AppDelegate.swift */; };
 		AD8168CB1FFD7810002EBC59 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD8168CA1FFD7810002EBC59 /* ViewController.swift */; };
 		AD8168CE1FFD7810002EBC59 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AD8168CC1FFD7810002EBC59 /* Main.storyboard */; };
-		AD8168D11FFD7810002EBC59 /* Timely_Goals.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = AD8168CF1FFD7810002EBC59 /* Timely_Goals.xcdatamodeld */; };
 		AD8168D31FFD7810002EBC59 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AD8168D21FFD7810002EBC59 /* Assets.xcassets */; };
 		AD8168D61FFD7810002EBC59 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AD8168D41FFD7810002EBC59 /* LaunchScreen.storyboard */; };
 		AD8168E11FFD7810002EBC59 /* Timely_GoalsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD8168E01FFD7810002EBC59 /* Timely_GoalsTests.swift */; };
 		AD8168EC1FFD7810002EBC59 /* Timely_GoalsUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD8168EB1FFD7810002EBC59 /* Timely_GoalsUITests.swift */; };
+		AD8168FA1FFD7EE4002EBC59 /* Cells.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD8168F91FFD7EE4002EBC59 /* Cells.swift */; };
+		ADFAA8C31FFEA503009B02B0 /* Item.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADFAA8C21FFEA503009B02B0 /* Item.swift */; };
+		ADFAA8CE1FFEA7C7009B02B0 /* Model.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = ADFAA8CC1FFEA7C7009B02B0 /* Model.xcdatamodeld */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -39,7 +41,6 @@
 		AD8168C81FFD7810002EBC59 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		AD8168CA1FFD7810002EBC59 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
 		AD8168CD1FFD7810002EBC59 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
-		AD8168D01FFD7810002EBC59 /* Timely_Goals.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = Timely_Goals.xcdatamodel; sourceTree = "<group>"; };
 		AD8168D21FFD7810002EBC59 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		AD8168D51FFD7810002EBC59 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		AD8168D71FFD7810002EBC59 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -49,6 +50,9 @@
 		AD8168E71FFD7810002EBC59 /* Timely GoalsUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Timely GoalsUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		AD8168EB1FFD7810002EBC59 /* Timely_GoalsUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Timely_GoalsUITests.swift; sourceTree = "<group>"; };
 		AD8168ED1FFD7810002EBC59 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		AD8168F91FFD7EE4002EBC59 /* Cells.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Cells.swift; sourceTree = "<group>"; };
+		ADFAA8C21FFEA503009B02B0 /* Item.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Item.swift; sourceTree = "<group>"; };
+		ADFAA8CD1FFEA7C7009B02B0 /* Model.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = Model.xcdatamodel; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -105,7 +109,9 @@
 				AD8168D21FFD7810002EBC59 /* Assets.xcassets */,
 				AD8168D41FFD7810002EBC59 /* LaunchScreen.storyboard */,
 				AD8168D71FFD7810002EBC59 /* Info.plist */,
-				AD8168CF1FFD7810002EBC59 /* Timely_Goals.xcdatamodeld */,
+				AD8168F91FFD7EE4002EBC59 /* Cells.swift */,
+				ADFAA8C21FFEA503009B02B0 /* Item.swift */,
+				ADFAA8CC1FFEA7C7009B02B0 /* Model.xcdatamodeld */,
 			);
 			path = "Timely Goals";
 			sourceTree = "<group>";
@@ -262,9 +268,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				ADFAA8C31FFEA503009B02B0 /* Item.swift in Sources */,
+				AD8168FA1FFD7EE4002EBC59 /* Cells.swift in Sources */,
+				ADFAA8CE1FFEA7C7009B02B0 /* Model.xcdatamodeld in Sources */,
 				AD8168CB1FFD7810002EBC59 /* ViewController.swift in Sources */,
 				AD8168C91FFD7810002EBC59 /* AppDelegate.swift in Sources */,
-				AD8168D11FFD7810002EBC59 /* Timely_Goals.xcdatamodeld in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -433,6 +441,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = E6JAU5RVUR;
 				INFOPLIST_FILE = "Timely Goals/Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 10.3;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.Timely-Goals";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -448,6 +457,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = E6JAU5RVUR;
 				INFOPLIST_FILE = "Timely Goals/Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 10.3;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.Timely-Goals";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -564,13 +574,13 @@
 /* End XCConfigurationList section */
 
 /* Begin XCVersionGroup section */
-		AD8168CF1FFD7810002EBC59 /* Timely_Goals.xcdatamodeld */ = {
+		ADFAA8CC1FFEA7C7009B02B0 /* Model.xcdatamodeld */ = {
 			isa = XCVersionGroup;
 			children = (
-				AD8168D01FFD7810002EBC59 /* Timely_Goals.xcdatamodel */,
+				ADFAA8CD1FFEA7C7009B02B0 /* Model.xcdatamodel */,
 			);
-			currentVersion = AD8168D01FFD7810002EBC59 /* Timely_Goals.xcdatamodel */;
-			path = Timely_Goals.xcdatamodeld;
+			currentVersion = ADFAA8CD1FFEA7C7009B02B0 /* Model.xcdatamodel */;
+			path = Model.xcdatamodeld;
 			sourceTree = "<group>";
 			versionGroupType = wrapper.xcdatamodel;
 		};
