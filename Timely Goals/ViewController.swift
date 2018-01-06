@@ -17,6 +17,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     var selectedCell = 0
     var tempUnit = 0
     private var dragLabel: UILabel?
+    var dragX = 0.0
     
     var oldPoint = CGPoint()
     var oldHeight : CGFloat = 0.0
@@ -78,27 +79,16 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         
         switch recognizer.state {
         case .began:
+            view.endEditing(true)
             if recognizer.view != nil  {
-                
-                for i in 0...Items[selectedUnit].count - 1 {
-                    let tableCell = tableView.cellForRow(at: IndexPath(item: i, section: 0))
-                    let neworigin = tableCell?.convert(CGPoint.zero, to: view)
-                    var newframe = tableCell?.frame
-                    newframe?.origin = neworigin!
-                    
-                    var recframe = recognizer.view?.frame
-                    let recorigin = recognizer.view?.convert(CGPoint.zero, to: view)
-                    recframe?.origin = recorigin!
-                    
-                    if (recframe?.intersects(newframe!))! {
-                        selectedCell = i
-                    }
-                }
+            
+                selectedCell = tableCellCheck(recognizer: recognizer)
                 
                 let label = UILabel()
                 label.translatesAutoresizingMaskIntoConstraints = false
                 label.text = Items[selectedUnit][selectedCell].label
                 dragLabel = label
+                dragX = Double((dragLabel?.center.x)! + 50)
                 
                 view.addSubview(dragLabel!)
                 view.bringSubview(toFront: dragLabel!)
@@ -111,7 +101,43 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 print("Begin")
             }
         case .changed:
-            dragLabel?.center = recognizer.location(in: view)
+            let point = recognizer.location(in: view)
+            let tView = originConverter(targetView: tableView)
+            if tView.contains(point) {
+                dragLabel?.center.y = recognizer.location(in: view).y
+                dragLabel?.center.x = CGFloat(dragX)
+            } else {
+                dragLabel?.center = recognizer.location(in: view)
+            }
+            
+            for i in 0...Items[selectedUnit].count - 1 {
+                let indexPath1 = IndexPath(row: i, section: 0)
+                let indexPath2 = IndexPath(row: selectedCell, section: 0)
+                let tableCell = tableView.cellForRow(at: indexPath1)
+                let newframe = originConverter(targetView: tableCell!)
+                
+                if (newframe.contains(point)) {
+                    print("\(i) \(selectedCell)")
+                    if i == selectedCell {
+                        return
+                    }
+                    tableView.beginUpdates()
+                    let movedItem = Items[selectedUnit][selectedCell]
+                    Items[selectedUnit].remove(at: selectedCell)
+                    Items[selectedUnit].insert(movedItem, at: i)
+                    tableView.moveRow(at: indexPath1, to: indexPath2)
+                    tableView.moveRow(at: indexPath2, to: indexPath1)
+                    tableView.endUpdates()
+                    selectedCell = i
+                    break
+                }
+            }
+            
+            let checkResult = tableCellCheck(recognizer: recognizer)
+            print(checkResult)
+            if (checkResult != -1) {
+                
+            }
         case .ended:
             if (dragLabel == nil) { return }
             
@@ -137,6 +163,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                     dragLabel?.removeFromSuperview()
                     dragLabel = nil
                     isIntersection = true
+                    
                     break
                 }
             }
@@ -180,10 +207,9 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 return
             }
             
-            let movedItem = Items[fromIndex]
-            Items.remove(at: fromIndex)
-            Items.insert(movedItem, at: toIndex)
-        
+            let movedItem = Items[selectedUnit][fromIndex]
+            Items[selectedUnit].remove(at: fromIndex)
+            Items[selectedUnit].insert(movedItem, at: toIndex)
     }
     func tableView(_ tableView: UITableView, targetIndexPathForMoveFromRowAt sourceIndexPath: IndexPath, toProposedIndexPath proposedDestinationIndexPath: IndexPath) -> IndexPath {
         if sourceIndexPath.row == Items.count - 1 ||
@@ -267,6 +293,30 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         selectedUnit = tempUnit
         editingTextField = false
         
+    }
+    
+    func tableCellCheck(recognizer: UILongPressGestureRecognizer) -> Int {
+        
+        for i in 0...Items[selectedUnit].count - 1 {
+            let tableCell = tableView.cellForRow(at: IndexPath(item: i, section: 0))
+            
+            let recframe = originConverter(targetView: (recognizer.view)!)
+            let newframe = originConverter(targetView: tableCell!)
+            
+            if (recframe.intersects(newframe)) {
+                return i
+            }
+        }
+        
+        return -1
+        
+    }
+    
+    func originConverter(targetView: UIView) -> CGRect {
+        var frame = targetView.frame
+        let origin = targetView.convert(CGPoint.zero, to: view)
+        frame.origin = origin
+        return frame
     }
     
 }
