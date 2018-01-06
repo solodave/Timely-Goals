@@ -10,6 +10,8 @@ import UIKit
 
 class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, UITextFieldDelegate {
     
+    var highlightCellAtBeginning = false
+    
     var Items: [[Item]] = [[],[],[],[]]
     var TimeUnits = ["Daily", "Weekly", "Monthly", "Yearly"]
     
@@ -23,7 +25,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     var oldHeight : CGFloat = 0.0
     var oldWidth : CGFloat = 0.0
     
-    var previousIndexPath = IndexPath(item: 0, section: 0)
+    var previousIndexPath : IndexPath? = nil
     var editingTextField : Bool = false
     
     @IBOutlet var tableView: UITableView!
@@ -36,9 +38,6 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         tableView.dataSource = self
         collectionView.delegate = self
         collectionView.dataSource = self
-        
-        collectionView.selectItem(at: previousIndexPath, animated: false, scrollPosition: .left)
-        collectionView.reloadItems(at: [previousIndexPath])
     }
 
     
@@ -241,6 +240,12 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         
         cell.TimeUnitLabel.text = TimeUnits[indexPath.row]
         
+        if (indexPath.row == 0 && !highlightCellAtBeginning) {
+            cell.layer.borderWidth = 1.0
+            cell.layer.borderColor = UIColor.blue.cgColor
+        }
+        
+        
         return cell
     }
     
@@ -251,12 +256,15 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             selectedUnit = indexPath.row
         }
         
-        let oldcell = collectionView.cellForItem(at: previousIndexPath)
+        if let oldpath = previousIndexPath {
+            let oldcell = collectionView.cellForItem(at: oldpath)
+        
+            oldcell?.layer.borderWidth = 0.0
+            oldcell?.layer.borderColor = UIColor.clear.cgColor
+        }
+        
         let cell = collectionView.cellForItem(at: indexPath)
-        
-        oldcell?.layer.borderWidth = 0.0
-        oldcell?.layer.borderColor = UIColor.clear.cgColor
-        
+
         cell?.layer.borderWidth = 1.0
         cell?.layer.borderColor = UIColor.blue.cgColor
         
