@@ -11,6 +11,7 @@ import UIKit
 class TaskCell: UITableViewCell {
     
     @IBOutlet var TaskField: UITextField!
+
 }
 
 class TimeUnitCell: UICollectionViewCell {

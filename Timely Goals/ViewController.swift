@@ -70,7 +70,20 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         
         // Method of identifying cells
         cell.contentView.addGestureRecognizer(lpGestureRecognizer)
+        
+        let pan = UIPanGestureRecognizer(target: self, action:#selector(removeTask))
+        cell.contentView.addGestureRecognizer(pan)
+        
         return cell
+    }
+    
+    @objc func removeTask(panGesture: UIPanGestureRecognizer)
+    {
+        if (panGesture.view != nil) {
+            selectedCell = tableCellCheck(recognizer: panGesture)
+            let selectedTableCell = tableView.cellForRow(at: IndexPath(item: selectedCell, section: 0))
+            selectedTableCell?.contentView.frame.origin.x = panGesture.location(in: view).x
+        }
     }
     
     @objc func didLongPressCell (recognizer: UILongPressGestureRecognizer) {
@@ -188,14 +201,14 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         
     }
     
-    func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
+    /*func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
         
         if editingStyle == .delete {
             self.Items[selectedUnit].remove(at: indexPath.row)
             self.tableView.deleteRows(at: [indexPath], with: .automatic)
         }
  
-    }
+    }*/
     
     func tableView(_ tableView: UITableView, moveRowAt sourceIndexPath: IndexPath, to destinationIndexPath: IndexPath) {
         
@@ -303,7 +316,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         
     }
     
-    func tableCellCheck(recognizer: UILongPressGestureRecognizer) -> Int {
+    func tableCellCheck(recognizer: UIGestureRecognizer) -> Int {
         
         for i in 0...Items[selectedUnit].count - 1 {
             let tableCell = tableView.cellForRow(at: IndexPath(item: i, section: 0))
