@@ -17,6 +17,8 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     
     var selectedUnit = 0
     var selectedCell = 0
+    var selectedTableCell = TaskCell()
+    var panAmount = CGFloat()
     var tempUnit = 0
     private var dragLabel: UILabel?
     var dragX = 0.0
@@ -27,6 +29,8 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     
     var previousIndexPath : IndexPath? = nil
     var editingTextField : Bool = false
+    var panLocation: CGPoint? = nil
+    var originalConstant: CGFloat? = nil
     
     @IBOutlet var tableView: UITableView!
     @IBOutlet var collectionView: UICollectionView!
@@ -36,6 +40,8 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         
         tableView.delegate = self
         tableView.dataSource = self
+        tableView.estimatedRowHeight = 65
+
         collectionView.delegate = self
         collectionView.dataSource = self
     }
@@ -65,6 +71,9 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         cell.TaskField.text = item.label
         cell.TaskField.placeholder = String(indexPath.row)
         cell.TaskField.delegate = self
+        cell.LabelWrapperConstraint.constant = 0
+        cell.ImageLeftConstraint.isActive = true
+        cell.ImageRightConstraint.isActive = false
         
         let lpGestureRecognizer: UILongPressGestureRecognizer = UILongPressGestureRecognizer(target: self, action: #selector(didLongPressCell))
         
@@ -77,12 +86,84 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         return cell
     }
     
-    @objc func removeTask(panGesture: UIPanGestureRecognizer)
+    @objc func removeTask(recognizer: UIPanGestureRecognizer)
     {
-        if (panGesture.view != nil) {
-            selectedCell = tableCellCheck(recognizer: panGesture)
-            let selectedTableCell = tableView.cellForRow(at: IndexPath(item: selectedCell, section: 0))
-            selectedTableCell?.contentView.frame.origin.x = panGesture.location(in: view).x
+        let panRightMax : CGFloat = 50.0
+        let panLeftMax : CGFloat = -50.0
+        switch recognizer.state {
+        case .began:
+            if (recognizer.view != nil) {
+                view.endEditing(true)
+                selectedCell = tableCellCheck(recognizer: recognizer)
+                selectedTableCell = tableView.cellForRow(at: IndexPath(item: selectedCell, section: 0)) as! TaskCell
+                originalConstant = selectedTableCell.LabelWrapperConstraint.constant
+                selectedTableCell.Background.alpha = 0.5
+                panLocation = recognizer.location(in: view)
+            } else {
+                recognizer.isEnabled = false
+                recognizer.isEnabled = true
+            }
+        case .changed:
+            if let panLoc = panLocation {
+                panAmount = recognizer.location(in: view).x - panLoc.x
+                
+                
+                
+                if (panAmount > 0) {
+                    selectedTableCell.ImageLeftConstraint.isActive = true
+                    selectedTableCell.ImageRightConstraint.isActive = false
+                    if panAmount > panRightMax {
+                        UIView.animate(withDuration: 0.2) {
+                            self.selectedTableCell.Background.alpha = 1
+                        }
+                    } else {
+                        UIView.animate(withDuration: 0.2) {
+                            self.selectedTableCell.Background.alpha = 0.5
+                        }
+                    }
+                } else {
+                    selectedTableCell.ImageLeftConstraint.isActive = false
+                    selectedTableCell.ImageRightConstraint.isActive = true
+                    if panAmount < panLeftMax {
+                        UIView.animate(withDuration: 0.2) {
+                            self.selectedTableCell.Background.alpha = 1
+                        }
+                    } else {
+                        UIView.animate(withDuration: 0.2) {
+                            self.selectedTableCell.Background.alpha = 0.5
+                        }
+                    }
+                }
+            }
+            selectedTableCell.LabelWrapperConstraint.constant = panAmount
+        case .ended:
+            panLocation = nil
+            if (panAmount > panRightMax || panAmount < panLeftMax) {
+                let edge = panAmount > panRightMax ? UIScreen.main.bounds.width : -UIScreen.main.bounds.width
+                selectedTableCell.LabelWrapperConstraint.constant = edge
+                UIView.animate(withDuration: 0.2, animations: { () -> Void in
+                    self.view.layoutIfNeeded()
+                }, completion: { finished in
+                    self.Items[self.selectedUnit].remove(at: self.selectedCell)
+                    self.tableView.deleteRows(at: [IndexPath(row: self.selectedCell, section: 0)], with: .automatic)
+                })
+            } else {
+                if let oriCon = originalConstant {
+                    selectedTableCell.LabelWrapperConstraint.constant = oriCon
+                    UIView.animate(withDuration: 0.2) {
+                        self.view.layoutIfNeeded()
+                    }
+                }
+            }
+        case .cancelled:
+            if let oriCon = originalConstant {
+                selectedTableCell.LabelWrapperConstraint.constant = oriCon
+                UIView.animate(withDuration: 0.2) {
+                    self.view.layoutIfNeeded()
+                }
+            }
+        default:
+            print("Default?")
         }
     }
     
