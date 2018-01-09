@@ -8,7 +8,7 @@
 
 import UIKit
 
-class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, UITextFieldDelegate {
+class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, UITextFieldDelegate, UIGestureRecognizerDelegate {
     
     var highlightCellAtBeginning = false
     
@@ -81,39 +81,26 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         cell.contentView.addGestureRecognizer(lpGestureRecognizer)
         
         let pan = UIPanGestureRecognizer(target: self, action:#selector(removeTask))
+        pan.delegate = self
         cell.contentView.addGestureRecognizer(pan)
         
-        for view in cell.ButtonWrapper.subviews {
-            view.removeFromSuperview()
-        }
+        cell.RecurringButton.alpha = item.isRecurring ? 1.0 : 0.2
         
-        let alpha : CGFloat = item.isRecurring ? 1.0 : 0.2
-        
-        let button = UIButton(frame: CGRect(x: 0, y: 0, width: 30, height: 30))
-        button.backgroundColor = UIColor(displayP3Red: 0.0, green: 200/255, blue: 200/255, alpha: alpha)
-        button.setTitle("R", for: .normal)
-        button.layer.cornerRadius = 5
-        button.addTarget(self, action: #selector(makeRecurring), for: .touchUpInside)
-        button.tag = indexPath.row
-        
-        cell.ButtonWrapper.addSubview(button)
-        print(cell.ButtonWrapper.subviews)
+        cell.RecurringButton.layer.cornerRadius = 5
+        cell.RecurringButton.addTarget(self, action: #selector(makeRecurring), for: .touchUpInside)
+        cell.RecurringButton.tag = indexPath.row
+
         return cell
     }
     
     @objc func makeRecurring(button: UIButton) {
         
         let path = IndexPath(row: button.tag, section: 0)
-        let tag = button.tag
     
         Items[selectedUnit][path.row].isRecurring = !Items[selectedUnit][path.row].isRecurring
         button.alpha = Items[selectedUnit][path.row].isRecurring ? 1.0 : 0.2
         
-        DispatchQueue.main.async {
-            self.tableView.reloadData()
-            self.view.setNeedsLayout()
-            self.view.setNeedsDisplay()
-        }
+
     }
     
     @objc func removeTask(recognizer: UIPanGestureRecognizer)
@@ -176,7 +163,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 }, completion: { finished in
                     self.Items[self.selectedUnit].remove(at: self.selectedCell)
                     self.tableView.deleteRows(at: [IndexPath(row: self.selectedCell, section: 0)], with: .automatic)
-                    self.tableView.reloadData()
+                    //self.tableView.reloadData()
                 })
             } else {
                 if let oriCon = originalConstant {
@@ -430,6 +417,19 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         let origin = targetView.convert(CGPoint.zero, to: view)
         frame.origin = origin
         return frame
+    }
+    
+    func gestureRecognizerShouldBegin(_ g: UIGestureRecognizer) -> Bool {
+        if (g.isKind(of: UIPanGestureRecognizer.self)) {
+            let t = (g as! UIPanGestureRecognizer).translation(in: view)
+            let verticalness = abs(t.y)
+            if (verticalness > 0) {
+                print("ignore vertical motion in the pan ...")
+                print("the event engine will >pass on the gesture< to the scroll view")
+                return false
+            }
+        }
+        return true
     }
     
 }

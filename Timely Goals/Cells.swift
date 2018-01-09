@@ -18,6 +18,7 @@ class TaskCell: UITableViewCell {
     @IBOutlet var ImageRightConstraint: NSLayoutConstraint!
     @IBOutlet var Background: UIView!
     @IBOutlet var ButtonWrapper: UIView!
+    @IBOutlet var RecurringButton: UIButton!
 }
 
 class TimeUnitCell: UICollectionViewCell {
