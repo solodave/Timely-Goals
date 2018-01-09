@@ -83,7 +83,37 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         let pan = UIPanGestureRecognizer(target: self, action:#selector(removeTask))
         cell.contentView.addGestureRecognizer(pan)
         
+        for view in cell.ButtonWrapper.subviews {
+            view.removeFromSuperview()
+        }
+        
+        let alpha : CGFloat = item.isRecurring ? 1.0 : 0.2
+        
+        let button = UIButton(frame: CGRect(x: 0, y: 0, width: 30, height: 30))
+        button.backgroundColor = UIColor(displayP3Red: 0.0, green: 200/255, blue: 200/255, alpha: alpha)
+        button.setTitle("R", for: .normal)
+        button.layer.cornerRadius = 5
+        button.addTarget(self, action: #selector(makeRecurring), for: .touchUpInside)
+        button.tag = indexPath.row
+        
+        cell.ButtonWrapper.addSubview(button)
+        print(cell.ButtonWrapper.subviews)
         return cell
+    }
+    
+    @objc func makeRecurring(button: UIButton) {
+        
+        let path = IndexPath(row: button.tag, section: 0)
+        let tag = button.tag
+    
+        Items[selectedUnit][path.row].isRecurring = !Items[selectedUnit][path.row].isRecurring
+        button.alpha = Items[selectedUnit][path.row].isRecurring ? 1.0 : 0.2
+        
+        DispatchQueue.main.async {
+            self.tableView.reloadData()
+            self.view.setNeedsLayout()
+            self.view.setNeedsDisplay()
+        }
     }
     
     @objc func removeTask(recognizer: UIPanGestureRecognizer)
@@ -146,6 +176,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 }, completion: { finished in
                     self.Items[self.selectedUnit].remove(at: self.selectedCell)
                     self.tableView.deleteRows(at: [IndexPath(row: self.selectedCell, section: 0)], with: .automatic)
+                    self.tableView.reloadData()
                 })
             } else {
                 if let oriCon = originalConstant {
@@ -291,26 +322,6 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
  
     }*/
     
-    func tableView(_ tableView: UITableView, moveRowAt sourceIndexPath: IndexPath, to destinationIndexPath: IndexPath) {
-        
-        let fromIndex = sourceIndexPath.row
-        let toIndex = destinationIndexPath.row
-        
-            if fromIndex == toIndex {
-                return
-            }
-            
-            let movedItem = Items[selectedUnit][fromIndex]
-            Items[selectedUnit].remove(at: fromIndex)
-            Items[selectedUnit].insert(movedItem, at: toIndex)
-    }
-    func tableView(_ tableView: UITableView, targetIndexPathForMoveFromRowAt sourceIndexPath: IndexPath, toProposedIndexPath proposedDestinationIndexPath: IndexPath) -> IndexPath {
-        if sourceIndexPath.row == Items.count - 1 ||
-            proposedDestinationIndexPath.row == Items.count - 1 {
-            return sourceIndexPath
-        }
-        return proposedDestinationIndexPath
-    }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         

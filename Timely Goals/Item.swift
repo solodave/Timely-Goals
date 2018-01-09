@@ -11,6 +11,7 @@ import UIKit
 class Item {
     
     var label : String
+    var isRecurring : Bool = false
     
     init(label: String) {
         self.label = label

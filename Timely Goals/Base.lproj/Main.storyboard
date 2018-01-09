@@ -79,14 +79,14 @@
                                     <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="none" indentationWidth="10" reuseIdentifier="TaskCell" id="1Xo-Pg-TOO" customClass="TaskCell" customModule="Timely_Goals" customModuleProvider="target">
                                         <rect key="frame" x="0.0" y="28" width="375" height="44"/>
                                         <autoresizingMask key="autoresizingMask"/>
-                                        <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" preservesSuperviewLayoutMargins="YES" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="1Xo-Pg-TOO" id="CKc-lF-sWj">
+                                        <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" ambiguous="YES" preservesSuperviewLayoutMargins="YES" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="1Xo-Pg-TOO" id="CKc-lF-sWj">
                                             <rect key="frame" x="0.0" y="0.0" width="375" height="43.5"/>
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
-                                                <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="vXT-pt-snq" userLabel="Background">
+                                                <view contentMode="scaleToFill" ambiguous="YES" translatesAutoresizingMaskIntoConstraints="NO" id="vXT-pt-snq" userLabel="Background">
                                                     <rect key="frame" x="0.0" y="0.0" width="375" height="44"/>
                                                     <subviews>
-                                                        <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="checkmarkwhite" translatesAutoresizingMaskIntoConstraints="NO" id="m46-zu-KCy">
+                                                        <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" ambiguous="YES" image="checkmarkwhite" translatesAutoresizingMaskIntoConstraints="NO" id="m46-zu-KCy">
                                                             <rect key="frame" x="0.0" y="0.0" width="40" height="40"/>
                                                             <constraints>
                                                                 <constraint firstAttribute="width" constant="40" id="5gC-xJ-xM0"/>
@@ -101,28 +101,19 @@
                                                         <constraint firstItem="m46-zu-KCy" firstAttribute="top" secondItem="vXT-pt-snq" secondAttribute="top" id="lCr-UG-piQ"/>
                                                     </constraints>
                                                 </view>
-                                                <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="go5-jl-1h4" userLabel="Label Wrapper">
+                                                <view contentMode="scaleToFill" ambiguous="YES" translatesAutoresizingMaskIntoConstraints="NO" id="go5-jl-1h4" userLabel="Label Wrapper">
                                                     <rect key="frame" x="0.0" y="0.0" width="375" height="44"/>
                                                     <subviews>
-                                                        <button opaque="NO" alpha="0.5" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="VeK-ee-eRW">
+                                                        <view contentMode="scaleToFill" ambiguous="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Iho-rj-q3M" userLabel="Button Wrapper">
                                                             <rect key="frame" x="10" y="7" width="30" height="30"/>
-                                                            <color key="backgroundColor" red="0.0" green="0.78431372549019607" blue="0.78431372549019607" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                                            <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                                             <constraints>
-                                                                <constraint firstAttribute="width" constant="30" id="TAE-Lc-Odl"/>
-                                                                <constraint firstAttribute="height" constant="30" id="h7s-BW-bgV"/>
+                                                                <constraint firstAttribute="width" constant="30" id="Vvc-8W-nJ6"/>
+                                                                <constraint firstAttribute="height" constant="30" id="mPt-gW-Koo"/>
                                                             </constraints>
-                                                            <state key="normal" title="R"/>
-                                                            <userDefinedRuntimeAttributes>
-                                                                <userDefinedRuntimeAttribute type="number" keyPath="layer.cornerRadius">
-                                                                    <integer key="value" value="5"/>
-                                                                </userDefinedRuntimeAttribute>
-                                                            </userDefinedRuntimeAttributes>
-                                                            <connections>
-                                                                <action selector="SetRecurring:" destination="1Xo-Pg-TOO" eventType="touchUpInside" id="eVU-Zf-dmc"/>
-                                                            </connections>
-                                                        </button>
-                                                        <textField opaque="NO" contentMode="scaleToFill" enabled="NO" contentHorizontalAlignment="left" contentVerticalAlignment="center" text="New Task" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="HaX-zv-bwN">
-                                                            <rect key="frame" x="50" y="13.5" width="325" height="17"/>
+                                                        </view>
+                                                        <textField opaque="NO" contentMode="scaleToFill" ambiguous="YES" enabled="NO" contentHorizontalAlignment="left" contentVerticalAlignment="center" text="New Task" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="HaX-zv-bwN">
+                                                            <rect key="frame" x="50" y="13.5" width="67" height="17"/>
                                                             <nil key="textColor"/>
                                                             <fontDescription key="fontDescription" type="system" pointSize="14"/>
                                                             <textInputTraits key="textInputTraits"/>
@@ -130,11 +121,10 @@
                                                     </subviews>
                                                     <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                                     <constraints>
-                                                        <constraint firstAttribute="trailing" secondItem="HaX-zv-bwN" secondAttribute="trailing" id="1kG-Tp-C5s"/>
-                                                        <constraint firstItem="VeK-ee-eRW" firstAttribute="leading" secondItem="go5-jl-1h4" secondAttribute="leading" constant="10" id="3YH-mX-4hp"/>
-                                                        <constraint firstItem="VeK-ee-eRW" firstAttribute="centerY" secondItem="go5-jl-1h4" secondAttribute="centerY" id="B7E-lO-SGf"/>
+                                                        <constraint firstItem="Iho-rj-q3M" firstAttribute="trailing" secondItem="HaX-zv-bwN" secondAttribute="leading" constant="-10" id="1kG-Tp-C5s"/>
+                                                        <constraint firstItem="Iho-rj-q3M" firstAttribute="centerY" secondItem="go5-jl-1h4" secondAttribute="centerY" id="ALL-l8-7DI"/>
                                                         <constraint firstItem="HaX-zv-bwN" firstAttribute="centerY" secondItem="go5-jl-1h4" secondAttribute="centerY" id="Q9j-lC-3Iw"/>
-                                                        <constraint firstItem="HaX-zv-bwN" firstAttribute="leading" secondItem="VeK-ee-eRW" secondAttribute="trailing" constant="10" id="TvC-3g-fGd"/>
+                                                        <constraint firstItem="Iho-rj-q3M" firstAttribute="leading" secondItem="go5-jl-1h4" secondAttribute="leading" constant="10" id="YwG-rd-6Mp"/>
                                                     </constraints>
                                                 </view>
                                             </subviews>
@@ -151,11 +141,11 @@
                                         </tableViewCellContentView>
                                         <connections>
                                             <outlet property="Background" destination="vXT-pt-snq" id="11I-0g-2CS"/>
+                                            <outlet property="ButtonWrapper" destination="Iho-rj-q3M" id="2UH-Uc-hSx"/>
                                             <outlet property="ImageLeftConstraint" destination="3BX-g3-Voi" id="m1A-IX-dB3"/>
                                             <outlet property="ImageRightConstraint" destination="Tcy-h5-21Q" id="Nuu-lN-X31"/>
                                             <outlet property="LabelWrapper" destination="go5-jl-1h4" id="qDv-BY-5OS"/>
                                             <outlet property="LabelWrapperConstraint" destination="cX5-8x-Lf0" id="RHM-bc-jgI"/>
-                                            <outlet property="RecurringButton" destination="VeK-ee-eRW" id="I80-bQ-J5z"/>
                                             <outlet property="TaskField" destination="HaX-zv-bwN" id="Edz-ym-a7y"/>
                                         </connections>
                                     </tableViewCell>
