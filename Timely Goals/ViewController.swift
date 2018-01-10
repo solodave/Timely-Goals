@@ -10,10 +10,12 @@ import UIKit
 
 class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, UITextFieldDelegate, UIGestureRecognizerDelegate {
     
+    var Items: ItemStore!
+    
     var highlightCellAtBeginning = false
     
-    var Items: [[Item]] = [[],[],[],[]]
-    var TimeUnits = ["Daily", "Weekly", "Monthly", "Yearly"]
+    
+    var TimeUnits = ["Day", "Week", "Month", "Year", "Old"]
     
     var selectedUnit = 0
     var selectedCell = 0
@@ -27,7 +29,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     var oldHeight : CGFloat = 0.0
     var oldWidth : CGFloat = 0.0
     
-    var previousIndexPath : IndexPath? = nil
+    var previousIndexPath : IndexPath = IndexPath(row: 0, section: 0)
     var editingTextField : Bool = false
     var panLocation: CGPoint? = nil
     var originalConstant: CGFloat? = nil
@@ -50,24 +52,29 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     @IBAction func addNewItem(_ sender: Any) {
         
         let item = Item(label: "New task")
-        let index = Items[selectedUnit].count
         
-        Items[selectedUnit].append(item)
-        let indexPath = IndexPath(row: index, section: 0)
+        Items.items[selectedUnit].insert(item, at: 0)
+        let indexPath = IndexPath(row: 0, section: 0)
 
         tableView.insertRows(at: [indexPath], with: .automatic)
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         
-        return Items[selectedUnit].count
+        var itemCount = 0
+        for item in Items.items[selectedUnit] {
+            if !item.isDoneForNow {
+                itemCount += 1
+            }
+        }
+        return itemCount
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
         let cell = tableView.dequeueReusableCell(withIdentifier: "TaskCell", for: indexPath) as! TaskCell
         
-        let item = Items[selectedUnit][indexPath.row]
+        let item = Items.items[selectedUnit][indexPath.row]
         cell.TaskField.text = item.label
         cell.TaskField.placeholder = String(indexPath.row)
         cell.TaskField.delegate = self
@@ -97,8 +104,8 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         
         let path = IndexPath(row: button.tag, section: 0)
     
-        Items[selectedUnit][path.row].isRecurring = !Items[selectedUnit][path.row].isRecurring
-        button.alpha = Items[selectedUnit][path.row].isRecurring ? 1.0 : 0.2
+        Items.items[selectedUnit][path.row].isRecurring = !Items.items[selectedUnit][path.row].isRecurring
+        button.alpha = Items.items[selectedUnit][path.row].isRecurring ? 1.0 : 0.2
         
 
     }
@@ -161,7 +168,14 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 UIView.animate(withDuration: 0.2, animations: { () -> Void in
                     self.view.layoutIfNeeded()
                 }, completion: { finished in
-                    self.Items[self.selectedUnit].remove(at: self.selectedCell)
+                    self.Items.items[self.selectedUnit][self.selectedCell].isDoneForNow = true
+                    if self.Items.items[self.selectedUnit][self.selectedCell].isRecurring {
+                        let item = self.Items.items[self.selectedUnit][self.selectedCell]
+                        item.oldPosition = self.selectedCell
+                        self.Items.items[self.selectedUnit + 5].append(item)
+                    }
+                    self.Items.items[self.selectedUnit].remove(at: self.selectedCell)
+                    
                     self.tableView.deleteRows(at: [IndexPath(row: self.selectedCell, section: 0)], with: .automatic)
                     //self.tableView.reloadData()
                 })
@@ -197,7 +211,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 
                 let label = UILabel()
                 label.translatesAutoresizingMaskIntoConstraints = false
-                label.text = Items[selectedUnit][selectedCell].label
+                label.text = Items.items[selectedUnit][selectedCell].label
                 dragLabel = label
                 dragX = Double((dragLabel?.center.x)! + 50)
                 
@@ -221,7 +235,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 dragLabel?.center = recognizer.location(in: view)
             }
             
-            for i in 0...Items[selectedUnit].count - 1 {
+            for i in 0...Items.items[selectedUnit].count - 1 {
                 let indexPath1 = IndexPath(row: i, section: 0)
                 let indexPath2 = IndexPath(row: selectedCell, section: 0)
                 let tableCell = tableView.cellForRow(at: indexPath1)
@@ -233,9 +247,9 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                         return
                     }
                     tableView.beginUpdates()
-                    let movedItem = Items[selectedUnit][selectedCell]
-                    Items[selectedUnit].remove(at: selectedCell)
-                    Items[selectedUnit].insert(movedItem, at: i)
+                    let movedItem = Items.items[selectedUnit][selectedCell]
+                    Items.items[selectedUnit].remove(at: selectedCell)
+                    Items.items[selectedUnit].insert(movedItem, at: i)
                     tableView.moveRow(at: indexPath1, to: indexPath2)
                     tableView.moveRow(at: indexPath2, to: indexPath1)
                     tableView.endUpdates()
@@ -255,7 +269,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             
             var isIntersection = false
             for i in 0...TimeUnits.count - 1 {
-                if (i == selectedUnit) {
+                if (i == selectedUnit || i == 4) {
                     continue
                 }
                 let collectionCell = collectionView.cellForItem(at: IndexPath(item: i, section: 0))!
@@ -265,10 +279,10 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 
                 
                 if dragLabel!.frame.intersects(newframe) {
-                    let item = Items[selectedUnit][selectedCell]
-                    Items[i].append(item)
-                    print("i is \(i)")
-                    Items[selectedUnit].remove(at: selectedCell)
+                    let item = Items.items[selectedUnit][selectedCell]
+                    item.modifiedDate = Date()
+                    Items.items[i].append(item)
+                    Items.items[selectedUnit].remove(at: selectedCell)
                     tableView.deleteRows(at: [IndexPath(row: selectedCell, section: 0)], with: .none)
                     
                     dragLabel?.removeFromSuperview()
@@ -286,9 +300,9 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 
                 // Only way to force refresh of table given the setup
                 let item = Item(label: "Dummy")
-                Items[selectedUnit].append(item)
+                Items.items[selectedUnit].append(item)
                 tableView.insertRows(at: [IndexPath(row: 0, section: 0)], with: .none)
-                Items[selectedUnit].removeLast()
+                Items.items[selectedUnit].removeLast()
                 tableView.deleteRows(at: [IndexPath(row: 0, section: 0)], with: .none)
 
             }
@@ -303,7 +317,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     /*func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
         
         if editingStyle == .delete {
-            self.Items[selectedUnit].remove(at: indexPath.row)
+            self.Items.items[selectedUnit].remove(at: indexPath.row)
             self.tableView.deleteRows(at: [indexPath], with: .automatic)
         }
  
@@ -323,7 +337,8 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     }
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return TimeUnits.count
+        let stuff = TimeUnits.count
+        return stuff
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
@@ -332,9 +347,17 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         
         cell.TimeUnitLabel.text = TimeUnits[indexPath.row]
         
-        if (indexPath.row == 0 && !highlightCellAtBeginning) {
+        if (indexPath.row == 4) {
+            cell.TimeUnitLabel.textColor = UIColor.red
+        } else {
+            cell.TimeUnitLabel.textColor = UIColor.black
+        }
+        if (indexPath.row == selectedUnit) {
             cell.layer.borderWidth = 1.0
             cell.layer.borderColor = UIColor.blue.cgColor
+        } else {
+            cell.layer.borderWidth = 0.0
+            cell.layer.borderColor = UIColor.clear.cgColor
         }
         
         
@@ -348,29 +371,27 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             selectedUnit = indexPath.row
         }
         
-        if let oldpath = previousIndexPath {
-            let oldcell = collectionView.cellForItem(at: oldpath)
+        let oldcell = collectionView.cellForItem(at: previousIndexPath)!
         
-            oldcell?.layer.borderWidth = 0.0
-            oldcell?.layer.borderColor = UIColor.clear.cgColor
-        }
+        oldcell.layer.borderWidth = 0.0
+        oldcell.layer.borderColor = UIColor.clear.cgColor
         
-        let cell = collectionView.cellForItem(at: indexPath)
+        let cell = collectionView.cellForItem(at: indexPath)!
 
-        cell?.layer.borderWidth = 1.0
-        cell?.layer.borderColor = UIColor.blue.cgColor
+        cell.layer.borderWidth = 1.0
+        cell.layer.borderColor = UIColor.blue.cgColor
         
-        collectionView.reloadItems(at: [indexPath])
+        collectionView.reloadItems(at: [previousIndexPath, indexPath])
         previousIndexPath = indexPath
         tableView.reloadData()
         
     }
     
-    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumInteritemSpacingForSectionAt section: Int) -> CGFloat {
         
         let count = CGFloat(TimeUnits.count)
-        let width : CGFloat = UIScreen.main.bounds.width
-        let totalcontentwidth : CGFloat = 60.0 * count
+        let width : CGFloat = collectionView.frame.width
+        let totalcontentwidth : CGFloat = 45.0 * count
        return (width - totalcontentwidth) / count
     }
     
@@ -382,11 +403,9 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     
     func textFieldDidEndEditing(_ textField: UITextField) {
         
-        let cell = Int(textField.placeholder!)!
-        
         if let text = textField.text {
-            Items[selectedUnit][cell].label = text
-            tableView.reloadRows(at: [IndexPath(row: cell, section: 0)], with: .none)
+            Items.items[selectedUnit][selectedCell].label = text
+           // tableView.reloadRows(at: [IndexPath(row: cell, section: 0)], with: .none)
         }
         
         textField.isEnabled = false
@@ -397,7 +416,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     
     func tableCellCheck(recognizer: UIGestureRecognizer) -> Int {
         
-        for i in 0...Items[selectedUnit].count - 1 {
+        for i in 0...Items.items[selectedUnit].count - 1 {
             let tableCell = tableView.cellForRow(at: IndexPath(item: i, section: 0))
             
             let recframe = originConverter(targetView: (recognizer.view)!)
