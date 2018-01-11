@@ -22,12 +22,15 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     var selectedTableCell = TaskCell()
     var panAmount = CGFloat()
     var tempUnit = 0
+    var tempCell = 0
     private var dragLabel: UILabel?
     var dragX = 0.0
+    var dragY :CGFloat = 0.0
     
     var oldPoint = CGPoint()
     var oldHeight : CGFloat = 0.0
     var oldWidth : CGFloat = 0.0
+    var originalOrigin = CGPoint()
     
     var previousIndexPath : IndexPath = IndexPath(row: 0, section: 0)
     var editingTextField : Bool = false
@@ -213,38 +216,59 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             if recognizer.view != nil  {
             
                 selectedCell = tableCellCheck(recognizer: recognizer)
+                let selectedTableCell = tableView.cellForRow(at: IndexPath(item: selectedCell, section: 0)) as! TaskCell
+                let textFrame = originConverter(targetView: selectedTableCell.TaskField)
+
                 
-                let label = UILabel()
+                let label = UILabel(frame: textFrame)
                 label.translatesAutoresizingMaskIntoConstraints = false
                 label.text = Items.items[selectedUnit][selectedCell].label
                 label.font = UIFont.systemFont(ofSize: 14.0)
                 dragLabel = label
-                dragX = Double((dragLabel?.center.x)! + 80)
+                dragX = Double((dragLabel?.center.x)! - 2.0)
+                dragY = (dragLabel?.center.y)! - recognizer.location(in:view).y
                 
                 view.addSubview(dragLabel!)
                 view.bringSubview(toFront: dragLabel!)
-                dragLabel?.center = recognizer.location(in: view)
+
+                originalOrigin = selectedTableCell.TaskField.convert(CGPoint.zero, to: view)
+
+                print("DDDDD \(dragLabel?.center.y) \(recognizer.location(in:view))")
                 
-                let selectedTableCell = tableView.cellForRow(at: IndexPath(item: selectedCell, section: 0))
-                selectedTableCell?.isHidden = true
+                UIView.animate(withDuration: 0.3) {
+                    selectedTableCell.TaskField.center.y -= self.dragY
+                    selectedTableCell.ButtonWrapper.alpha = 0.0
+                }
                 
                 view.setNeedsDisplay()
             }
         case .changed:
             let point = recognizer.location(in: view)
-            let tView = originConverter(targetView: tableView)
-            if tView.contains(point) {
-                dragLabel?.center.y = recognizer.location(in: view).y
-                dragLabel?.center.x = CGFloat(dragX)
+            let selectedTableCell = tableView.cellForRow(at: IndexPath(item: selectedCell, section: 0)) as! TaskCell
+
+            if (!selectedTableCell.isHidden) {
+                selectedTableCell.isHidden = true
+                selectedTableCell.TaskField.center.y += self.dragY
+                self.dragLabel?.center.y = recognizer.location(in: self.view).y
+                self.dragLabel?.center.x = CGFloat(self.dragX)
             } else {
-                dragLabel?.center = recognizer.location(in: view)
+                let tView = originConverter(targetView: tableView)
+                if tView.contains(point) {
+                    UIView.animate(withDuration: 0.1) {
+                        self.dragLabel?.center.y = recognizer.location(in: self.view).y
+                        self.dragLabel?.center.x = CGFloat(self.dragX)
+                    }
+                } else {
+                    UIView.animate(withDuration: 0.1) {
+                        self.dragLabel?.center = recognizer.location(in: self.view)
+                    }
+                }
             }
-            
             for i in 0...Items.items[selectedUnit].count - 1 {
                 let indexPath1 = IndexPath(row: i, section: 0)
                 let indexPath2 = IndexPath(row: selectedCell, section: 0)
-                let tableCell = tableView.cellForRow(at: indexPath1)
-                let newframe = originConverter(targetView: tableCell!)
+                let tableCell = tableView.cellForRow(at: indexPath1)!
+                let newframe = originConverter(targetView: tableCell)
                 
                 if (newframe.contains(point)) {
                     print("\(i) \(selectedCell)")
@@ -258,6 +282,13 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                     tableView.moveRow(at: indexPath1, to: indexPath2)
                     tableView.moveRow(at: indexPath2, to: indexPath1)
                     tableView.endUpdates()
+                    
+                    if selectedCell > i {
+                        originalOrigin.y -= tableCell.frame.height
+                    } else {
+                        originalOrigin.y += tableCell.frame.height
+                    }
+                    
                     selectedCell = i
                     break
                 }
@@ -270,7 +301,9 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             }
         case .ended:
             if (dragLabel == nil) { return }
-            
+            let selectedTableCell = tableView.cellForRow(at: IndexPath(row: selectedCell, section: 0)) as! TaskCell
+            selectedTableCell.isHidden = false
+            selectedTableCell.TaskField.isHidden = true
             
             var isIntersection = false
             for i in 0...TimeUnits.count - 1 {
@@ -295,9 +328,11 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                         newframe.origin.x += newframe.width / 2
                         newframe.origin.y += newframe.height / 2
                         self.dragLabel?.center = newframe.origin
+                        selectedTableCell.ButtonWrapper.alpha = 1.0
                     }, completion: { finished in
                         self.dragLabel?.removeFromSuperview()
                         self.dragLabel = nil
+                        selectedTableCell.TaskField.isHidden = false
                     })
                     
 
@@ -308,19 +343,28 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             }
             
             if (!isIntersection) {
-                dragLabel?.isHidden = true
-                dragLabel?.removeFromSuperview()
-                dragLabel = nil
                 
-                // Only way to force refresh of table given the setup
-                let item = Item(label: "Dummy")
-                Items.items[selectedUnit].append(item)
-                tableView.insertRows(at: [IndexPath(row: 0, section: 0)], with: .none)
-                Items.items[selectedUnit].removeLast()
-                tableView.deleteRows(at: [IndexPath(row: 0, section: 0)], with: .none)
+                UIView.animate(withDuration: 0.3, animations: { () -> Void in
+                    self.dragLabel?.frame.origin.y = self.originalOrigin.y
+                    selectedTableCell.ButtonWrapper.alpha = 1.0
+                }, completion: { finished in
+                    
+                    self.dragLabel?.isHidden = true
+                    self.dragLabel?.removeFromSuperview()
+                    self.dragLabel = nil
+                    selectedTableCell.TaskField.isHidden = false
+                    
+                    // Only way to force refresh of table given the setup
+                    let item = Item(label: "Dummy")
+                    self.Items.items[self.selectedUnit].append(item)
+                    self.tableView.insertRows(at: [IndexPath(row: 0, section: 0)], with: .none)
+                    self.Items.items[self.selectedUnit].removeLast()
+                    self.tableView.deleteRows(at: [IndexPath(row: 0, section: 0)], with: .none)
+                    self.tableView.reloadData()
+                })
+
 
             }
-            tableView.reloadData()
         default:
             print("Default?")
             
@@ -340,7 +384,10 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         
-        selectedCell = indexPath.row
+        tempCell = indexPath.row
+        if !editingTextField {
+            selectedCell = indexPath.row
+        }
         
         let cell = tableView.cellForRow(at: indexPath) as! TaskCell
         if let field = cell.TaskField {
@@ -430,6 +477,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         
         textField.isEnabled = false
         selectedUnit = tempUnit
+        selectedCell = tempCell
         editingTextField = false
         
     }
