@@ -55,7 +55,7 @@
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
                                                 <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="FE0-RM-8KN">
-                                                    <rect key="frame" x="9.5" y="12.5" width="31" height="14.5"/>
+                                                    <rect key="frame" x="7" y="12.5" width="31" height="14.5"/>
                                                     <fontDescription key="fontDescription" type="system" pointSize="12"/>
                                                     <nil key="textColor"/>
                                                     <nil key="highlightedColor"/>
@@ -189,6 +189,7 @@
                         </barButtonItem>
                     </navigationItem>
                     <connections>
+                        <outlet property="AddNewItemButton" destination="DQS-so-UAw" id="ZrB-z5-ett"/>
                         <outlet property="collectionView" destination="L6x-cJ-ecA" id="L36-tH-2OT"/>
                         <outlet property="tableView" destination="b0v-XL-Ht0" id="5Sz-ry-V5I"/>
                     </connections>

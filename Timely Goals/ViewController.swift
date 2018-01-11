@@ -34,6 +34,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     var panLocation: CGPoint? = nil
     var originalConstant: CGFloat? = nil
     
+    @IBOutlet var AddNewItemButton: UIBarButtonItem!
     @IBOutlet var tableView: UITableView!
     @IBOutlet var collectionView: UICollectionView!
     
@@ -50,6 +51,10 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
 
     
     @IBAction func addNewItem(_ sender: Any) {
+        
+        if selectedUnit == 4 {
+            return
+        }
         
         let item = Item(label: "New task")
         
@@ -212,8 +217,9 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 let label = UILabel()
                 label.translatesAutoresizingMaskIntoConstraints = false
                 label.text = Items.items[selectedUnit][selectedCell].label
+                label.font = UIFont.systemFont(ofSize: 14.0)
                 dragLabel = label
-                dragX = Double((dragLabel?.center.x)! + 50)
+                dragX = Double((dragLabel?.center.x)! + 80)
                 
                 view.addSubview(dragLabel!)
                 view.bringSubview(toFront: dragLabel!)
@@ -223,7 +229,6 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 selectedTableCell?.isHidden = true
                 
                 view.setNeedsDisplay()
-                print("Begin")
             }
         case .changed:
             let point = recognizer.location(in: view)
@@ -285,8 +290,17 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                     Items.items[selectedUnit].remove(at: selectedCell)
                     tableView.deleteRows(at: [IndexPath(row: selectedCell, section: 0)], with: .none)
                     
-                    dragLabel?.removeFromSuperview()
-                    dragLabel = nil
+                    UIView.animate(withDuration: 0.3, animations: { () -> Void in
+                        self.dragLabel?.transform = (self.dragLabel?.transform.scaledBy(x: 0.01, y: 0.01))!
+                        newframe.origin.x += newframe.width / 2
+                        newframe.origin.y += newframe.height / 2
+                        self.dragLabel?.center = newframe.origin
+                    }, completion: { finished in
+                        self.dragLabel?.removeFromSuperview()
+                        self.dragLabel = nil
+                    })
+                    
+
                     isIntersection = true
                     
                     break
@@ -337,8 +351,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     }
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        let stuff = TimeUnits.count
-        return stuff
+        return Items.items[4].count > 0 ? 5 : 4
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
@@ -366,6 +379,13 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
 
+        if (indexPath.row == 4) {
+            AddNewItemButton.isEnabled = false
+            AddNewItemButton.tintColor = UIColor.clear
+        } else {
+            AddNewItemButton.isEnabled = true
+            AddNewItemButton.tintColor = nil
+        }
         tempUnit = indexPath.row
         if !editingTextField {
             selectedUnit = indexPath.row
@@ -389,7 +409,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumInteritemSpacingForSectionAt section: Int) -> CGFloat {
         
-        let count = CGFloat(TimeUnits.count)
+        let count = CGFloat(Items.items[4].count > 0 ? 5 : 4)
         let width : CGFloat = collectionView.frame.width
         let totalcontentwidth : CGFloat = 45.0 * count
        return (width - totalcontentwidth) / count
@@ -443,8 +463,6 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             let t = (g as! UIPanGestureRecognizer).translation(in: view)
             let verticalness = abs(t.y)
             if (verticalness > 0) {
-                print("ignore vertical motion in the pan ...")
-                print("the event engine will >pass on the gesture< to the scroll view")
                 return false
             }
         }
