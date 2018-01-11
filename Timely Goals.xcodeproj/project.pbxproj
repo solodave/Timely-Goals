@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		AD0B6ADF2007F87A0006BC7C /* Kannada Sangam MN.ttc in Resources */ = {isa = PBXBuildFile; fileRef = AD0B6ADE2007F87A0006BC7C /* Kannada Sangam MN.ttc */; };
 		AD59F5DE200678B4009B699D /* TaskEntity+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD59F5DC200678B4009B699D /* TaskEntity+CoreDataClass.swift */; };
 		AD59F5DF200678B4009B699D /* TaskEntity+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD59F5DD200678B4009B699D /* TaskEntity+CoreDataProperties.swift */; };
 		AD59F5E120069FA1009B699D /* ItemStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD59F5E020069FA1009B699D /* ItemStore.swift */; };
@@ -40,6 +41,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		AD0B6ADE2007F87A0006BC7C /* Kannada Sangam MN.ttc */ = {isa = PBXFileReference; lastKnownFileType = file; name = "Kannada Sangam MN.ttc"; path = "../../../../../../Library/Fonts/Kannada Sangam MN.ttc"; sourceTree = "<group>"; };
 		AD59F5DC200678B4009B699D /* TaskEntity+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TaskEntity+CoreDataClass.swift"; sourceTree = "<group>"; };
 		AD59F5DD200678B4009B699D /* TaskEntity+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TaskEntity+CoreDataProperties.swift"; sourceTree = "<group>"; };
 		AD59F5E020069FA1009B699D /* ItemStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ItemStore.swift; sourceTree = "<group>"; };
@@ -91,6 +93,7 @@
 			children = (
 				AD59F5DC200678B4009B699D /* TaskEntity+CoreDataClass.swift */,
 				AD59F5DD200678B4009B699D /* TaskEntity+CoreDataProperties.swift */,
+				AD0B6ADE2007F87A0006BC7C /* Kannada Sangam MN.ttc */,
 				AD8168C71FFD7810002EBC59 /* Timely Goals */,
 				AD8168DF1FFD7810002EBC59 /* Timely GoalsTests */,
 				AD8168EA1FFD7810002EBC59 /* Timely GoalsUITests */,
@@ -252,6 +255,7 @@
 			files = (
 				AD8168D61FFD7810002EBC59 /* LaunchScreen.storyboard in Resources */,
 				AD8168D31FFD7810002EBC59 /* Assets.xcassets in Resources */,
+				AD0B6ADF2007F87A0006BC7C /* Kannada Sangam MN.ttc in Resources */,
 				AD8168CE1FFD7810002EBC59 /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

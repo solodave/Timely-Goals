@@ -19,7 +19,10 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     
     var selectedUnit = 0
     var selectedCell = 0
+    var dropCell : Int?
     var selectedTableCell = TaskCell()
+    
+    
     var panAmount = CGFloat()
     var tempUnit = 0
     var tempCell = 0
@@ -37,6 +40,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     var panLocation: CGPoint? = nil
     var originalConstant: CGFloat? = nil
     
+    @IBOutlet var GoalLabel: UINavigationItem!
     @IBOutlet var AddNewItemButton: UIBarButtonItem!
     @IBOutlet var tableView: UITableView!
     @IBOutlet var collectionView: UICollectionView!
@@ -94,6 +98,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         
         // Method of identifying cells
         cell.contentView.addGestureRecognizer(lpGestureRecognizer)
+        cell.backgroundColor = UIColor(displayP3Red: 0.0, green: 0.0, blue: 150/255, alpha: 0.15)
         
         let pan = UIPanGestureRecognizer(target: self, action:#selector(removeTask))
         pan.delegate = self
@@ -223,7 +228,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 let label = UILabel(frame: textFrame)
                 label.translatesAutoresizingMaskIntoConstraints = false
                 label.text = Items.items[selectedUnit][selectedCell].label
-                label.font = UIFont.systemFont(ofSize: 14.0)
+                label.font = UIFont(name: "Kannada Sangam MN", size: 14.0)
                 dragLabel = label
                 dragX = Double((dragLabel?.center.x)! - 2.0)
                 dragY = (dragLabel?.center.y)! - recognizer.location(in:view).y
@@ -232,8 +237,6 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 view.bringSubview(toFront: dragLabel!)
 
                 originalOrigin = selectedTableCell.TaskField.convert(CGPoint.zero, to: view)
-
-                print("DDDDD \(dragLabel?.center.y) \(recognizer.location(in:view))")
                 
                 UIView.animate(withDuration: 0.3) {
                     selectedTableCell.TaskField.center.y -= self.dragY
@@ -261,9 +264,33 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 } else {
                     UIView.animate(withDuration: 0.1) {
                         self.dragLabel?.center = recognizer.location(in: self.view)
+                        print("drag \(self.dragLabel?.center) \(recognizer.location(in: self.view))")
                     }
                 }
             }
+            
+            var isIntersection = false
+            for i in 0...TimeUnits.count - 1 {
+                let point = tableCollectionIntersect(it: i)
+                if point != CGPoint.zero {
+                    isIntersection = true
+                    if (dropCell != i) {
+                        let oldDropCell = dropCell
+                        dropCell = i
+                        if (oldDropCell != nil) {
+                            collectionView.reloadItems(at: [IndexPath(row: oldDropCell!, section: 0)])
+                        }
+                        collectionView.reloadItems(at: [IndexPath(row: dropCell!, section: 0)])
+                    }
+                    break
+                }
+            }
+            if !isIntersection && dropCell != nil {
+                let oldDropCell = dropCell
+                dropCell = nil
+                collectionView.reloadItems(at: [IndexPath(row: oldDropCell!, section: 0)])
+            }
+            
             for i in 0...Items.items[selectedUnit].count - 1 {
                 let indexPath1 = IndexPath(row: i, section: 0)
                 let indexPath2 = IndexPath(row: selectedCell, section: 0)
@@ -271,7 +298,6 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 let newframe = originConverter(targetView: tableCell)
                 
                 if (newframe.contains(point)) {
-                    print("\(i) \(selectedCell)")
                     if i == selectedCell {
                         return
                     }
@@ -293,30 +319,21 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                     break
                 }
             }
-            
-            let checkResult = tableCellCheck(recognizer: recognizer)
-            print(checkResult)
-            if (checkResult != -1) {
-                
-            }
         case .ended:
             if (dragLabel == nil) { return }
+            let oldDropCell = dropCell
+            dropCell = nil
+            if let dCell = oldDropCell {
+                collectionView.reloadItems(at: [IndexPath(row: dCell, section: 0)])
+            }
             let selectedTableCell = tableView.cellForRow(at: IndexPath(row: selectedCell, section: 0)) as! TaskCell
             selectedTableCell.isHidden = false
             selectedTableCell.TaskField.isHidden = true
             
             var isIntersection = false
             for i in 0...TimeUnits.count - 1 {
-                if (i == selectedUnit || i == 4) {
-                    continue
-                }
-                let collectionCell = collectionView.cellForItem(at: IndexPath(item: i, section: 0))!
-                let neworigin = collectionCell.convert(CGPoint.zero, to: view)
-                var newframe = collectionCell.frame
-                newframe.origin = neworigin
-                
-                
-                if dragLabel!.frame.intersects(newframe) {
+                let point = tableCollectionIntersect(it: i)
+                if point != CGPoint.zero {
                     let item = Items.items[selectedUnit][selectedCell]
                     item.modifiedDate = Date()
                     Items.items[i].append(item)
@@ -325,10 +342,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                     
                     UIView.animate(withDuration: 0.3, animations: { () -> Void in
                         self.dragLabel?.transform = (self.dragLabel?.transform.scaledBy(x: 0.01, y: 0.01))!
-                        newframe.origin.x += newframe.width / 2
-                        newframe.origin.y += newframe.height / 2
-                        self.dragLabel?.center = newframe.origin
-                        selectedTableCell.ButtonWrapper.alpha = 1.0
+                        self.dragLabel?.center = point
                     }, completion: { finished in
                         self.dragLabel?.removeFromSuperview()
                         self.dragLabel = nil
@@ -372,15 +386,6 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         
     }
     
-    /*func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
-        
-        if editingStyle == .delete {
-            self.Items.items[selectedUnit].remove(at: indexPath.row)
-            self.tableView.deleteRows(at: [indexPath], with: .automatic)
-        }
- 
-    }*/
-    
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         
@@ -407,6 +412,10 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         
         cell.TimeUnitLabel.text = TimeUnits[indexPath.row]
         
+        UIView.animate(withDuration: 0.3) {
+            cell.backgroundColor = UIColor.clear
+        }
+
         if (indexPath.row == 4) {
             cell.TimeUnitLabel.textColor = UIColor.red
         } else {
@@ -419,7 +428,14 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             cell.layer.borderWidth = 0.0
             cell.layer.borderColor = UIColor.clear.cgColor
         }
-        
+        if let dCell = dropCell {
+            if dCell == indexPath.row {
+                print("Cell for Item is \(dCell)")
+                UIView.animate(withDuration: 0.3) {
+                    cell.backgroundColor = UIColor.red.withAlphaComponent(0.5)
+                }
+            }
+        }
         
         return cell
     }
@@ -438,15 +454,21 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             selectedUnit = indexPath.row
         }
         
-        let oldcell = collectionView.cellForItem(at: previousIndexPath)!
+        switch indexPath.row {
+        case 0:
+            GoalLabel.title = "Daily Goals"
+        case 1:
+            GoalLabel.title = "Weekly Goals"
+        case 2:
+            GoalLabel.title = "Monthly Goals"
+        case 3:
+            GoalLabel.title = "Yearly Goals"
+        case 4:
+            GoalLabel.title = "Overdue Goals"
+        default:
+            GoalLabel.title = "Invalid section"
+        }
         
-        oldcell.layer.borderWidth = 0.0
-        oldcell.layer.borderColor = UIColor.clear.cgColor
-        
-        let cell = collectionView.cellForItem(at: indexPath)!
-
-        cell.layer.borderWidth = 1.0
-        cell.layer.borderColor = UIColor.blue.cgColor
         
         collectionView.reloadItems(at: [previousIndexPath, indexPath])
         previousIndexPath = indexPath
@@ -515,6 +537,23 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             }
         }
         return true
+    }
+    
+    func tableCollectionIntersect(it: Int) -> CGPoint {
+        if (it == selectedUnit || it == 4) {
+            return CGPoint.zero
+        }
+        let collectionCell = collectionView.cellForItem(at: IndexPath(item: it, section: 0))!
+        let neworigin = collectionCell.convert(CGPoint.zero, to: view)
+        var newframe = collectionCell.frame
+        newframe.origin = neworigin
+        if dragLabel!.frame.intersects(newframe) {
+            newframe.origin.x += newframe.width / 2
+            newframe.origin.y += newframe.height / 2
+            return newframe.origin
+        } else {
+            return CGPoint.zero
+        }
     }
     
 }
