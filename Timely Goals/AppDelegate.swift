@@ -54,6 +54,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
         let navController = window!.rootViewController as! UINavigationController
         let viewController = navController.topViewController as! ViewController
+        
+        if (viewController.tableView == nil) {
+            return
+        }
         let calendar = Calendar.current
         let currentDate = Date()
         

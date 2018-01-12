@@ -50,34 +50,25 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         
         tableView.delegate = self
         tableView.dataSource = self
-        tableView.estimatedRowHeight = 65
 
         collectionView.delegate = self
         collectionView.dataSource = self
     }
-
     
     @IBAction func addNewItem(_ sender: Any) {
-        
         if selectedUnit == 4 {
             return
         }
-        
-        let item = Item(label: "New task")
-        
-        Items.items[selectedUnit].insert(item, at: 0)
-        let indexPath = IndexPath(row: 0, section: 0)
-
-        tableView.insertRows(at: [indexPath], with: .automatic)
+        Items.items[selectedUnit].insert(Item(label: ""), at: 0)
+        tableView.insertRows(at: [IndexPath(row: 0, section: 0)], with: .automatic)
+        selectedCell = 0
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         
         var itemCount = 0
         for item in Items.items[selectedUnit] {
-            if !item.isDoneForNow {
-                itemCount += 1
-            }
+            itemCount += item.isDoneForNow ? 0 : 1
         }
         return itemCount
     }
@@ -88,7 +79,6 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         
         let item = Items.items[selectedUnit][indexPath.row]
         cell.TaskField.text = item.label
-        cell.TaskField.placeholder = String(indexPath.row)
         cell.TaskField.delegate = self
         cell.LabelWrapperConstraint.constant = 0
         cell.ImageLeftConstraint.isActive = true
@@ -96,7 +86,6 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         
         let lpGestureRecognizer: UILongPressGestureRecognizer = UILongPressGestureRecognizer(target: self, action: #selector(didLongPressCell))
         
-        // Method of identifying cells
         cell.contentView.addGestureRecognizer(lpGestureRecognizer)
         cell.backgroundColor = UIColor(displayP3Red: 0.0, green: 0.0, blue: 150/255, alpha: 0.15)
         
@@ -109,18 +98,14 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         cell.RecurringButton.layer.cornerRadius = 5
         cell.RecurringButton.addTarget(self, action: #selector(makeRecurring), for: .touchUpInside)
         cell.RecurringButton.tag = indexPath.row
-
+        
         return cell
     }
     
     @objc func makeRecurring(button: UIButton) {
-        
         let path = IndexPath(row: button.tag, section: 0)
-    
         Items.items[selectedUnit][path.row].isRecurring = !Items.items[selectedUnit][path.row].isRecurring
         button.alpha = Items.items[selectedUnit][path.row].isRecurring ? 1.0 : 0.2
-        
-
     }
     
     @objc func removeTask(recognizer: UIPanGestureRecognizer)
@@ -143,33 +128,14 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         case .changed:
             if let panLoc = panLocation {
                 panAmount = recognizer.location(in: view).x - panLoc.x
+
+                let isPanAmountPositive = panAmount > 0
+                selectedTableCell.ImageLeftConstraint.isActive = isPanAmountPositive
+                selectedTableCell.ImageRightConstraint.isActive = !isPanAmountPositive
                 
-                
-                
-                if (panAmount > 0) {
-                    selectedTableCell.ImageLeftConstraint.isActive = true
-                    selectedTableCell.ImageRightConstraint.isActive = false
-                    if panAmount > panRightMax {
-                        UIView.animate(withDuration: 0.2) {
-                            self.selectedTableCell.Background.alpha = 1
-                        }
-                    } else {
-                        UIView.animate(withDuration: 0.2) {
-                            self.selectedTableCell.Background.alpha = 0.5
-                        }
-                    }
-                } else {
-                    selectedTableCell.ImageLeftConstraint.isActive = false
-                    selectedTableCell.ImageRightConstraint.isActive = true
-                    if panAmount < panLeftMax {
-                        UIView.animate(withDuration: 0.2) {
-                            self.selectedTableCell.Background.alpha = 1
-                        }
-                    } else {
-                        UIView.animate(withDuration: 0.2) {
-                            self.selectedTableCell.Background.alpha = 0.5
-                        }
-                    }
+                let isLargePan = isPanAmountPositive ? panAmount > panRightMax : panAmount < panLeftMax
+                UIView.animate(withDuration: 0.2) {
+                    self.selectedTableCell.Background.alpha = isLargePan ? 1 : 0.5
                 }
             }
             selectedTableCell.LabelWrapperConstraint.constant = panAmount
@@ -190,31 +156,28 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                     self.Items.items[self.selectedUnit].remove(at: self.selectedCell)
                     
                     self.tableView.deleteRows(at: [IndexPath(row: self.selectedCell, section: 0)], with: .automatic)
-                    //self.tableView.reloadData()
                 })
             } else {
-                if let oriCon = originalConstant {
-                    selectedTableCell.LabelWrapperConstraint.constant = oriCon
-                    UIView.animate(withDuration: 0.2) {
-                        self.view.layoutIfNeeded()
-                    }
-                }
+                resetAfterPan()
             }
         case .cancelled:
-            if let oriCon = originalConstant {
-                selectedTableCell.LabelWrapperConstraint.constant = oriCon
-                UIView.animate(withDuration: 0.2) {
-                    self.view.layoutIfNeeded()
-                }
-            }
+            resetAfterPan()
         default:
             print("Default?")
         }
     }
     
+    func resetAfterPan() {
+        if let oriCon = originalConstant {
+            selectedTableCell.LabelWrapperConstraint.constant = oriCon
+            UIView.animate(withDuration: 0.2) {
+                self.view.layoutIfNeeded()
+            }
+        }
+    }
+    
     @objc func didLongPressCell (recognizer: UILongPressGestureRecognizer) {
        
-        
         switch recognizer.state {
         case .began:
             view.endEditing(true)
@@ -223,14 +186,13 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 selectedCell = tableCellCheck(recognizer: recognizer)
                 let selectedTableCell = tableView.cellForRow(at: IndexPath(item: selectedCell, section: 0)) as! TaskCell
                 let textFrame = originConverter(targetView: selectedTableCell.TaskField)
-
                 
                 let label = UILabel(frame: textFrame)
                 label.translatesAutoresizingMaskIntoConstraints = false
                 label.text = Items.items[selectedUnit][selectedCell].label
                 label.font = UIFont(name: "Kannada Sangam MN", size: 14.0)
                 dragLabel = label
-                dragX = Double((dragLabel?.center.x)! - 2.0)
+                dragX = Double((dragLabel?.center.x)! - 81.0)
                 dragY = (dragLabel?.center.y)! - recognizer.location(in:view).y
                 
                 view.addSubview(dragLabel!)
@@ -242,8 +204,6 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                     selectedTableCell.TaskField.center.y -= self.dragY
                     selectedTableCell.ButtonWrapper.alpha = 0.0
                 }
-                
-                view.setNeedsDisplay()
             }
         case .changed:
             let point = recognizer.location(in: view)
@@ -264,7 +224,6 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 } else {
                     UIView.animate(withDuration: 0.1) {
                         self.dragLabel?.center = recognizer.location(in: self.view)
-                        print("drag \(self.dragLabel?.center) \(recognizer.location(in: self.view))")
                     }
                 }
             }
@@ -302,19 +261,12 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                         return
                     }
                     tableView.beginUpdates()
-                    let movedItem = Items.items[selectedUnit][selectedCell]
-                    Items.items[selectedUnit].remove(at: selectedCell)
-                    Items.items[selectedUnit].insert(movedItem, at: i)
+                    Items.items[selectedUnit].swapAt(selectedCell, i)
                     tableView.moveRow(at: indexPath1, to: indexPath2)
                     tableView.moveRow(at: indexPath2, to: indexPath1)
                     tableView.endUpdates()
                     
-                    if selectedCell > i {
-                        originalOrigin.y -= tableCell.frame.height
-                    } else {
-                        originalOrigin.y += tableCell.frame.height
-                    }
-                    
+                    originalOrigin.y += tableCell.frame.height * (selectedCell > i ? -1 : 1)
                     selectedCell = i
                     break
                 }
@@ -347,48 +299,29 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                         self.dragLabel?.removeFromSuperview()
                         self.dragLabel = nil
                         selectedTableCell.TaskField.isHidden = false
+                        selectedTableCell.ButtonWrapper.alpha = 1.0
                     })
-                    
-
                     isIntersection = true
-                    
                     break
                 }
             }
             
             if (!isIntersection) {
-                
                 UIView.animate(withDuration: 0.3, animations: { () -> Void in
                     self.dragLabel?.frame.origin.y = self.originalOrigin.y
                     selectedTableCell.ButtonWrapper.alpha = 1.0
                 }, completion: { finished in
-                    
-                    self.dragLabel?.isHidden = true
                     self.dragLabel?.removeFromSuperview()
                     self.dragLabel = nil
                     selectedTableCell.TaskField.isHidden = false
-                    
-                    // Only way to force refresh of table given the setup
-                    let item = Item(label: "Dummy")
-                    self.Items.items[self.selectedUnit].append(item)
-                    self.tableView.insertRows(at: [IndexPath(row: 0, section: 0)], with: .none)
-                    self.Items.items[self.selectedUnit].removeLast()
-                    self.tableView.deleteRows(at: [IndexPath(row: 0, section: 0)], with: .none)
-                    self.tableView.reloadData()
                 })
-
-
             }
         default:
             print("Default?")
-            
         }
-        
     }
-    
-    
+
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        
         tempCell = indexPath.row
         if !editingTextField {
             selectedCell = indexPath.row
@@ -399,7 +332,6 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             field.isEnabled = true
             field.becomeFirstResponder()
         }
-        
     }
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
@@ -409,31 +341,19 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "TimeUnitCell", for: indexPath) as! TimeUnitCell
-        
         cell.TimeUnitLabel.text = TimeUnits[indexPath.row]
         
         UIView.animate(withDuration: 0.3) {
             cell.backgroundColor = UIColor.clear
         }
 
-        if (indexPath.row == 4) {
-            cell.TimeUnitLabel.textColor = UIColor.red
-        } else {
-            cell.TimeUnitLabel.textColor = UIColor.black
-        }
-        if (indexPath.row == selectedUnit) {
-            cell.layer.borderWidth = 1.0
-            cell.layer.borderColor = UIColor.blue.cgColor
-        } else {
-            cell.layer.borderWidth = 0.0
-            cell.layer.borderColor = UIColor.clear.cgColor
-        }
-        if let dCell = dropCell {
-            if dCell == indexPath.row {
-                print("Cell for Item is \(dCell)")
-                UIView.animate(withDuration: 0.3) {
-                    cell.backgroundColor = UIColor.red.withAlphaComponent(0.5)
-                }
+        cell.TimeUnitLabel.textColor = indexPath.row == 4 ? UIColor.red : UIColor.black
+        cell.layer.borderWidth = indexPath.row == selectedUnit ? 1.0 : 0.0
+        cell.layer.borderColor = indexPath.row == selectedUnit ? UIColor.blue.cgColor : UIColor.clear.cgColor
+
+        if let dCell = dropCell, dCell == indexPath.row {
+            UIView.animate(withDuration: 0.3) {
+                cell.backgroundColor = UIColor.red.withAlphaComponent(0.5)
             }
         }
         
@@ -454,24 +374,10 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             selectedUnit = indexPath.row
         }
         
-        switch indexPath.row {
-        case 0:
-            GoalLabel.title = "Daily Goals"
-        case 1:
-            GoalLabel.title = "Weekly Goals"
-        case 2:
-            GoalLabel.title = "Monthly Goals"
-        case 3:
-            GoalLabel.title = "Yearly Goals"
-        case 4:
-            GoalLabel.title = "Overdue Goals"
-        default:
-            GoalLabel.title = "Invalid section"
-        }
-        
-        
-        collectionView.reloadItems(at: [previousIndexPath, indexPath])
-        previousIndexPath = indexPath
+        let goalLabelTitles = ["Daily", "Weekly", "Monthly", "Yearly", "Overdue"]
+        GoalLabel.title = "\(goalLabelTitles[indexPath.row]) Goals"
+
+        collectionView.reloadData()
         tableView.reloadData()
         
     }
@@ -485,23 +391,23 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     }
     
     func textFieldDidBeginEditing(_ textField: UITextField) {
-
         editingTextField = true
-        
     }
     
     func textFieldDidEndEditing(_ textField: UITextField) {
-        
         if let text = textField.text {
             Items.items[selectedUnit][selectedCell].label = text
-           // tableView.reloadRows(at: [IndexPath(row: cell, section: 0)], with: .none)
         }
         
         textField.isEnabled = false
         selectedUnit = tempUnit
         selectedCell = tempCell
         editingTextField = false
-        
+    }
+    
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        self.view.endEditing(true)
+        return false
     }
     
     func tableCellCheck(recognizer: UIGestureRecognizer) -> Int {
@@ -516,9 +422,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 return i
             }
         }
-        
         return -1
-        
     }
     
     func originConverter(targetView: UIView) -> CGRect {
@@ -555,6 +459,4 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             return CGPoint.zero
         }
     }
-    
 }
-
