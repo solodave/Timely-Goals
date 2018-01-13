@@ -11,10 +11,11 @@ import UIKit
 class Item: NSObject, NSCoding {
     
     var label : String
-    var isRecurring : Bool = false
     var isDoneForNow : Bool = false
     var modifiedDate = Date()
     var oldPosition: Int = -1
+    var recurrenceArray : [Bool] = Array(repeating: false, count: 12)
+    var recurrenceButtons : [UIButton] = Array(repeating: UIButton(), count: 12)
     
     init(label: String) {
         self.label = label
@@ -22,7 +23,6 @@ class Item: NSObject, NSCoding {
     
     func encode(with aCoder: NSCoder) {
         aCoder.encode(label, forKey: "label")
-        aCoder.encode(isRecurring, forKey: "isRecurring")
         aCoder.encode(isDoneForNow, forKey: "isDoneForNow")
         aCoder.encode(modifiedDate, forKey: "modifiedDate")
         aCoder.encode(oldPosition, forKey: "oldPosition")
@@ -30,7 +30,6 @@ class Item: NSObject, NSCoding {
     
     required init(coder aDecoder: NSCoder) {
         label = aDecoder.decodeObject(forKey: "label") as! String
-        isRecurring = aDecoder.decodeBool(forKey: "isRecurring")
         isDoneForNow = aDecoder.decodeBool(forKey: "isDoneForNow")
         modifiedDate = aDecoder.decodeObject(forKey: "modifiedDate") as! Date
         oldPosition = aDecoder.decodeInteger(forKey: "oldPosition")
@@ -38,17 +37,13 @@ class Item: NSObject, NSCoding {
         super.init()
     }
     
-    /*func getWeekday() -> Int {
-        let calendar = Calendar.current
-        let dayOfWeek = calendar.component(.weekday, from: self.creationDate)
-        return dayOfWeek
+    func isRecurring() -> Bool {
+        for i in recurrenceArray {
+            if (i) {
+                return true
+            }
+        }
+        return false
     }
-    
-    func getWeekdayOrdinal() -> Int {
-        
-        let calendar = Calendar.current
-        let weekdayOrdinal = calendar.component(.weekdayOrdinal, from: self.creationDate)
-        return weekdayOrdinal
-    }*/
     
 }

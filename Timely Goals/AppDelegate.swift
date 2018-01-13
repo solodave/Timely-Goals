@@ -109,7 +109,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                     print("Something seriously went wrong in the app delegate")
                 }
                 if newPeriod {
-                    if viewController.Items.items[i][j].isRecurring {
+                    if viewController.Items.items[i][j].isRecurring() {
                         viewController.Items.items[i][j].isDoneForNow = false
                         viewController.Items.items[i][j].modifiedDate = Date()
                         if (i > 4) {

@@ -11,31 +11,25 @@ import UIKit
 class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, UITextFieldDelegate, UIGestureRecognizerDelegate {
     
     var Items: ItemStore!
-    
-    var highlightCellAtBeginning = false
-    
-    
     var TimeUnits = ["Day", "Week", "Month", "Year", "Old"]
+    var AllUnits = [[String]]()
+    var DayUnits = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+    var WeekUnits = ["Every Week", "Every 2nd Week", "Every 3rd Week", "Every 4th Week"]
+    var MonthUnits = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
     
     var selectedUnit = 0
     var selectedCell = 0
     var dropCell : Int?
     var selectedTableCell = TaskCell()
     
-    
     var panAmount = CGFloat()
     var tempUnit = 0
     var tempCell = 0
     private var dragLabel: UILabel?
     var dragX = 0.0
-    var dragY :CGFloat = 0.0
+    var dragY: CGFloat = 0.0
     
-    var oldPoint = CGPoint()
-    var oldHeight : CGFloat = 0.0
-    var oldWidth : CGFloat = 0.0
     var originalOrigin = CGPoint()
-    
-    var previousIndexPath : IndexPath = IndexPath(row: 0, section: 0)
     var editingTextField : Bool = false
     var panLocation: CGPoint? = nil
     var originalConstant: CGFloat? = nil
@@ -47,12 +41,11 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
         tableView.delegate = self
         tableView.dataSource = self
-
         collectionView.delegate = self
         collectionView.dataSource = self
+        AllUnits = [DayUnits, WeekUnits, MonthUnits]
     }
     
     @IBAction func addNewItem(_ sender: Any) {
@@ -93,7 +86,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         pan.delegate = self
         cell.contentView.addGestureRecognizer(pan)
         
-        cell.RecurringButton.alpha = item.isRecurring ? 1.0 : 0.2
+        cell.RecurringButton.alpha = item.isRecurring() ? 1.0 : 0.2
         
         cell.RecurringButton.layer.cornerRadius = 5
         cell.RecurringButton.addTarget(self, action: #selector(makeRecurring), for: .touchUpInside)
@@ -102,10 +95,54 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         return cell
     }
     
-    @objc func makeRecurring(button: UIButton) {
-        let path = IndexPath(row: button.tag, section: 0)
-        Items.items[selectedUnit][path.row].isRecurring = !Items.items[selectedUnit][path.row].isRecurring
-        button.alpha = Items.items[selectedUnit][path.row].isRecurring ? 1.0 : 0.2
+    @objc func makeRecurring(recurButton: UIButton) {
+        let path = IndexPath(row: recurButton.tag, section: 0)
+        let cell = tableView.cellForRow(at: path) as! TaskCell
+        let item = Items.items[selectedUnit][path.row]
+        let buttonFrame : CGRect = originConverter(targetView: recurButton)
+        cell.ButtonWrapper.isHidden = true
+        var topConstraints: [NSLayoutConstraint?] = Array(repeating: nil, count: 12)
+        let ranges = [6, 3, 11, 0]
+        for i in 0...ranges[selectedUnit] {
+            item.recurrenceButtons[i] = UIButton(frame: buttonFrame)
+            item.recurrenceButtons[i].titleLabel?.font = UIFont(name: "Kannada Sangam MN", size: 14.0)
+            item.recurrenceButtons[i].translatesAutoresizingMaskIntoConstraints = false
+            item.recurrenceButtons[i].backgroundColor = UIColor.orange
+            item.recurrenceButtons[i].setTitle(AllUnits[selectedUnit][i], for: .normal)
+            view.addSubview(item.recurrenceButtons[i])
+            
+            topConstraints[i] = item.recurrenceButtons[i].topAnchor.constraint(equalTo: view.topAnchor)
+            
+            topConstraints[i]?.isActive = true
+            topConstraints[i]?.constant = buttonFrame.origin.y
+            item.recurrenceButtons[i].leftAnchor.constraint(equalTo: view.leftAnchor).isActive = true
+            item.recurrenceButtons[i].leftAnchor.constraint(equalTo: view.leftAnchor).constant = buttonFrame.origin.x
+            
+        }
+        view.setNeedsLayout()
+        view.setNeedsDisplay()
+        let buttonSpacing : CGFloat = 10.0
+        let height: CGFloat = buttonFrame.height + buttonSpacing
+        let maxRangeNeeded: CGFloat = CGFloat(ceil(Double(ranges[selectedUnit] / 2)) * Double(height))
+        let tableHeight = tableView.frame.height
+        var firstButtonPosition: CGFloat
+        if buttonFrame.origin.y < maxRangeNeeded {
+            firstButtonPosition = maxRangeNeeded + 10
+        } else if (buttonFrame.origin.y > tableHeight - maxRangeNeeded) {
+            firstButtonPosition = (tableHeight - maxRangeNeeded) - 10
+        } else {
+            firstButtonPosition = buttonFrame.origin.y - maxRangeNeeded
+        }
+        UIView.animate(withDuration: 0.5) {
+            item.recurrenceButtons[0].topAnchor.constraint(equalTo: self.view.topAnchor).constant = firstButtonPosition
+            for i in 1...ranges[self.selectedUnit] {
+                topConstraints[i]?.isActive = false
+                item.recurrenceButtons[i].topAnchor.constraint(equalTo: item.recurrenceButtons[i - 1].bottomAnchor).isActive = true
+                item.recurrenceButtons[i].topAnchor.constraint(equalTo: item.recurrenceButtons[i - 1].bottomAnchor).constant = 10
+            }
+        }
+        
+        
     }
     
     @objc func removeTask(recognizer: UIPanGestureRecognizer)
@@ -148,7 +185,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                     self.view.layoutIfNeeded()
                 }, completion: { finished in
                     self.Items.items[self.selectedUnit][self.selectedCell].isDoneForNow = true
-                    if self.Items.items[self.selectedUnit][self.selectedCell].isRecurring {
+                    if self.Items.items[self.selectedUnit][self.selectedCell].isRecurring() {
                         let item = self.Items.items[self.selectedUnit][self.selectedCell]
                         item.oldPosition = self.selectedCell
                         self.Items.items[self.selectedUnit + 5].append(item)
@@ -356,7 +393,6 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 cell.backgroundColor = UIColor.red.withAlphaComponent(0.5)
             }
         }
-        
         return cell
     }
     
