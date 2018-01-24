@@ -29,6 +29,8 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     var dragX = 0.0
     var dragY: CGFloat = 0.0
     
+    var recurrenceButtons : [UIButton] = Array(repeating: UIButton(), count: 12)
+    
     var originalOrigin = CGPoint()
     var editingTextField : Bool = false
     var panLocation: CGPoint? = nil
@@ -98,48 +100,49 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     @objc func makeRecurring(recurButton: UIButton) {
         let path = IndexPath(row: recurButton.tag, section: 0)
         let cell = tableView.cellForRow(at: path) as! TaskCell
-        let item = Items.items[selectedUnit][path.row]
         let buttonFrame : CGRect = originConverter(targetView: recurButton)
         cell.ButtonWrapper.isHidden = true
         var topConstraints: [NSLayoutConstraint?] = Array(repeating: nil, count: 12)
         let ranges = [6, 3, 11, 0]
         for i in 0...ranges[selectedUnit] {
-            item.recurrenceButtons[i] = UIButton(frame: buttonFrame)
-            item.recurrenceButtons[i].titleLabel?.font = UIFont(name: "Kannada Sangam MN", size: 14.0)
-            item.recurrenceButtons[i].translatesAutoresizingMaskIntoConstraints = false
-            item.recurrenceButtons[i].backgroundColor = UIColor.orange
-            item.recurrenceButtons[i].setTitle(AllUnits[selectedUnit][i], for: .normal)
-            view.addSubview(item.recurrenceButtons[i])
+            recurrenceButtons[i] = UIButton(frame: buttonFrame)
+            recurrenceButtons[i].titleLabel?.font = UIFont(name: "Kannada Sangam MN", size: 14.0)
+            recurrenceButtons[i].translatesAutoresizingMaskIntoConstraints = false
+            recurrenceButtons[i].backgroundColor = UIColor.orange
+            recurrenceButtons[i].setTitle(AllUnits[selectedUnit][i], for: .normal)
+            tableView.addSubview(recurrenceButtons[i])
+            tableView.bringSubview(toFront: recurrenceButtons[i])
             
-            topConstraints[i] = item.recurrenceButtons[i].topAnchor.constraint(equalTo: view.topAnchor)
+            topConstraints[i] = recurrenceButtons[i].topAnchor.constraint(equalTo: tableView.topAnchor)
             
             topConstraints[i]?.isActive = true
             topConstraints[i]?.constant = buttonFrame.origin.y
-            item.recurrenceButtons[i].leftAnchor.constraint(equalTo: view.leftAnchor).isActive = true
-            item.recurrenceButtons[i].leftAnchor.constraint(equalTo: view.leftAnchor).constant = buttonFrame.origin.x
+            recurrenceButtons[i].leftAnchor.constraint(equalTo: cell.ButtonWrapper.leftAnchor).isActive = true
+            recurrenceButtons[i].leftAnchor.constraint(equalTo: cell.ButtonWrapper.leftAnchor).constant = buttonFrame.origin.x
             
         }
-        view.setNeedsLayout()
-        view.setNeedsDisplay()
+        
+        view.layoutIfNeeded()
         let buttonSpacing : CGFloat = 10.0
         let height: CGFloat = buttonFrame.height + buttonSpacing
         let maxRangeNeeded: CGFloat = CGFloat(ceil(Double(ranges[selectedUnit] / 2)) * Double(height))
         let tableHeight = tableView.frame.height
-        var firstButtonPosition: CGFloat
-        if buttonFrame.origin.y < maxRangeNeeded {
+        var firstButtonPosition: CGFloat = -50.0
+        /*if buttonFrame.origin.y < maxRangeNeeded {
             firstButtonPosition = maxRangeNeeded + 10
         } else if (buttonFrame.origin.y > tableHeight - maxRangeNeeded) {
             firstButtonPosition = (tableHeight - maxRangeNeeded) - 10
         } else {
             firstButtonPosition = buttonFrame.origin.y - maxRangeNeeded
+        }*/
+        self.recurrenceButtons[0].topAnchor.constraint(equalTo: self.tableView.topAnchor).constant = firstButtonPosition
+        for i in 1...ranges[self.selectedUnit] {
+            topConstraints[i]?.isActive = false
+            self.recurrenceButtons[i].topAnchor.constraint(equalTo: self.recurrenceButtons[i - 1].bottomAnchor).isActive = true
+            self.recurrenceButtons[i].topAnchor.constraint(equalTo: self.recurrenceButtons[i - 1].bottomAnchor).constant = 10
         }
         UIView.animate(withDuration: 0.5) {
-            item.recurrenceButtons[0].topAnchor.constraint(equalTo: self.view.topAnchor).constant = firstButtonPosition
-            for i in 1...ranges[self.selectedUnit] {
-                topConstraints[i]?.isActive = false
-                item.recurrenceButtons[i].topAnchor.constraint(equalTo: item.recurrenceButtons[i - 1].bottomAnchor).isActive = true
-                item.recurrenceButtons[i].topAnchor.constraint(equalTo: item.recurrenceButtons[i - 1].bottomAnchor).constant = 10
-            }
+            self.view.layoutIfNeeded()
         }
         
         

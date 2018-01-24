@@ -15,7 +15,6 @@ class Item: NSObject, NSCoding {
     var modifiedDate = Date()
     var oldPosition: Int = -1
     var recurrenceArray : [Bool] = Array(repeating: false, count: 12)
-    var recurrenceButtons : [UIButton] = Array(repeating: UIButton(), count: 12)
     
     init(label: String) {
         self.label = label
