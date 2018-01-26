@@ -8,6 +8,8 @@
 
 import UIKit
 import CoreData
+import UserNotifications
+
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -21,6 +23,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         let navController = window!.rootViewController as! UINavigationController
         let viewController = navController.topViewController as! ViewController
         viewController.Items = itemStore
+        
         
         return true
     }
@@ -73,7 +76,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         let currentDate = userCalendar.date(from: dateComponents)!*/
         
         
-        for i in 0...viewController.Items.items.count - 1 {
+       /* for i in 0...viewController.Items.items.count - 1 {
             if viewController.Items.items[i].count == 0 {
                 continue
             }
@@ -128,7 +131,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                 j += 1
             }
             viewController.tableView.reloadData()
-        }
+        }*/
     }
 
     func applicationWillTerminate(_ application: UIApplication) {

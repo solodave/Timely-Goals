@@ -7,8 +7,11 @@
 //
 
 import UIKit
+import UserNotifications
 
-class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, UITextFieldDelegate, UIGestureRecognizerDelegate {
+class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, UITextFieldDelegate, UIGestureRecognizerDelegate, UNUserNotificationCenterDelegate {
+    
+    var isGrantedNotificationAccess:Bool = false
     
     var Items: ItemStore!
     var TimeUnits = ["Day", "Week", "Month", "Year", "Old"]
@@ -21,6 +24,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     var selectedCell = 0
     var dropCell : Int?
     var selectedTableCell = TaskCell()
+    var isCreationCell = false
     
     var panAmount = CGFloat()
     var tempUnit = 0
@@ -29,15 +33,12 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     var dragX = 0.0
     var dragY: CGFloat = 0.0
     
-    var recurrenceButtons : [UIButton] = Array(repeating: UIButton(), count: 12)
-    
     var originalOrigin = CGPoint()
     var editingTextField : Bool = false
     var panLocation: CGPoint? = nil
     var originalConstant: CGFloat? = nil
     
     @IBOutlet var GoalLabel: UINavigationItem!
-    @IBOutlet var AddNewItemButton: UIBarButtonItem!
     @IBOutlet var tableView: UITableView!
     @IBOutlet var collectionView: UICollectionView!
     
@@ -48,15 +49,12 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         collectionView.delegate = self
         collectionView.dataSource = self
         AllUnits = [DayUnits, WeekUnits, MonthUnits]
-    }
-    
-    @IBAction func addNewItem(_ sender: Any) {
-        if selectedUnit == 4 {
-            return
-        }
-        Items.items[selectedUnit].insert(Item(label: ""), at: 0)
-        tableView.insertRows(at: [IndexPath(row: 0, section: 0)], with: .automatic)
-        selectedCell = 0
+        UNUserNotificationCenter.current().delegate = self
+
+        
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge], completionHandler: { (granted, error) in
+            self.isGrantedNotificationAccess = granted
+        })
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -65,85 +63,137 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         for item in Items.items[selectedUnit] {
             itemCount += item.isDoneForNow ? 0 : 1
         }
-        return itemCount
+        return itemCount + 1
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
-        let cell = tableView.dequeueReusableCell(withIdentifier: "TaskCell", for: indexPath) as! TaskCell
+        let rows = tableView.numberOfRows(inSection: 0)
         
-        let item = Items.items[selectedUnit][indexPath.row]
-        cell.TaskField.text = item.label
-        cell.TaskField.delegate = self
-        cell.LabelWrapperConstraint.constant = 0
-        cell.ImageLeftConstraint.isActive = true
-        cell.ImageRightConstraint.isActive = false
+        if (indexPath.row == rows - 1) {
+            let cell = tableView.dequeueReusableCell(withIdentifier: "AddCell", for: indexPath) as! AddCell
+            cell.AddButton.addTarget(self, action: #selector(nameNewTask), for: .touchUpInside)
+            cell.AddButton.tag = indexPath.row
+            cell.TaskField.delegate = self
+            return cell
+        } else {
+            let cell = tableView.dequeueReusableCell(withIdentifier: "TaskCell", for: indexPath) as! TaskCell
+            
+            let item = Items.items[selectedUnit][indexPath.row]
+            cell.TaskField.text = item.label
+            cell.TaskField.delegate = self
+            
+            cell.DateField.text = formatDate(wrappedDate: item.reminderDate)
+            if item.reminderDate != nil && item.reminderDate! < Date() {
+                cell.DateField.textColor = UIColor.red
+            } else {
+                cell.DateField.textColor = UIColor.black
+            }
+            
+            cell.LabelWrapperConstraint.constant = 0
+            cell.ImageLeftConstraint.isActive = true
+            cell.ImageRightConstraint.isActive = false
+            
+            let lpGestureRecognizer: UILongPressGestureRecognizer = UILongPressGestureRecognizer(target: self, action: #selector(didLongPressCell))
+            lpGestureRecognizer.minimumPressDuration = 1.0
+            cell.contentView.addGestureRecognizer(lpGestureRecognizer)
+            cell.backgroundColor = UIColor(displayP3Red: 0.0, green: 0.0, blue: 150/255, alpha: 0.15)
+            
+            let pan = UIPanGestureRecognizer(target: self, action:#selector(removeTask))
+            pan.delegate = self
+            cell.contentView.addGestureRecognizer(pan)
+            
+            cell.RecurringButton.alpha = 1.0 //item.isRecurring() ? 1.0 : 0.2
+            
+            cell.RecurringButton.layer.cornerRadius = 5
+            cell.RecurringButton.addTarget(self, action: #selector(makeRecurring), for: .touchUpInside)
+            cell.RecurringButton.tag = indexPath.row
+            
+            
+            let remindPan = UIPanGestureRecognizer(target: self, action:#selector(setTime))
+            //remindPan.delegate = self
+            
+            cell.RemindButton.layer.cornerRadius = 5
+            cell.RemindButton.addGestureRecognizer(remindPan)
+            
+            return cell
+        }
+    }
+    
+    @objc func nameNewTask(button: UIButton) {
+        selectedCell = button.tag
+        let path = IndexPath(row: button.tag, section: 0)
+        let cell = tableView.cellForRow(at: path) as! AddCell
+        isCreationCell = true
+        if let field = cell.TaskField {
+            field.isEnabled = true
+            field.becomeFirstResponder()
+        }
+    }
+    
+    @objc func setTime(recognizer: UIPanGestureRecognizer) {
+        let widthIncrement = UIScreen.main.bounds.width / 7
+        let heightIncrement = UIScreen.main.bounds.height / 96
         
-        let lpGestureRecognizer: UILongPressGestureRecognizer = UILongPressGestureRecognizer(target: self, action: #selector(didLongPressCell))
+        let x : Int = Int(floor(recognizer.location(in: view).x / widthIncrement))
+        let y : Int = Int(floor(recognizer.location(in: view).y / heightIncrement))
         
-        cell.contentView.addGestureRecognizer(lpGestureRecognizer)
-        cell.backgroundColor = UIColor(displayP3Red: 0.0, green: 0.0, blue: 150/255, alpha: 0.15)
+        let gregorian = Calendar(identifier: .gregorian)
+        var components = gregorian.dateComponents([.year, .month, .day, .hour, .minute, .second], from: Date())
         
-        let pan = UIPanGestureRecognizer(target: self, action:#selector(removeTask))
-        pan.delegate = self
-        cell.contentView.addGestureRecognizer(pan)
-        
-        cell.RecurringButton.alpha = item.isRecurring() ? 1.0 : 0.2
-        
-        cell.RecurringButton.layer.cornerRadius = 5
-        cell.RecurringButton.addTarget(self, action: #selector(makeRecurring), for: .touchUpInside)
-        cell.RecurringButton.tag = indexPath.row
-        
-        return cell
+        switch recognizer.state {
+        case .began:
+            let gregorian = Calendar(identifier: .gregorian)
+            components = gregorian.dateComponents([.year, .month, .day, .hour, .minute, .second], from: Date())
+            selectedCell = tableCellCheck(recognizer: recognizer)
+            selectedTableCell = tableView.cellForRow(at: IndexPath(item: selectedCell, section: 0)) as! TaskCell
+        case .changed:
+            components.day = components.day! + x
+            components.hour = y / 4
+            components.minute = (y % 4) * 15
+            components.second = 0
+            Items.items[selectedUnit][selectedCell].reminderDate = gregorian.date(from: components)!
+            print("\(x), \(y)")
+            selectedTableCell.DateField.text = formatDate(wrappedDate: Items.items[selectedUnit][selectedCell].reminderDate)
+            tableView.reloadRows(at: [IndexPath(row: selectedCell, section:0)], with: .none)
+        case .ended:
+            let item = Items.items[selectedUnit][selectedCell]
+            selectedTableCell.DateField.text = formatDate(wrappedDate: item.reminderDate)
+            tableView.reloadRows(at: [IndexPath(row: selectedCell, section: 0)], with: .none)
+            view.setNeedsDisplay()
+            view.layoutIfNeeded()
+            view.setNeedsLayout()
+            if isGrantedNotificationAccess{
+                let seconds = item.reminderDate!.timeIntervalSince(Date())
+                print(seconds)
+                if (seconds > 0) {
+                    //add notification code here
+                    let content = UNMutableNotificationContent()
+                    content.body = selectedTableCell.TaskField.text!
+                    content.categoryIdentifier = String(item.id)
+                    
+                    let trigger = UNTimeIntervalNotificationTrigger(timeInterval: seconds, repeats: false)
+                    let request = UNNotificationRequest(identifier: String(item.id), content: content, trigger: trigger)
+                    
+                    UNUserNotificationCenter.current().add(request, withCompletionHandler: nil)
+                    UNUserNotificationCenter.current().getPendingNotificationRequests(completionHandler: { requests in
+                        for request in requests {
+                            print("Request \(request.trigger)")
+                        }
+                    })
+                }
+            }
+        case .cancelled:
+            print("Cancelled?")
+        default:
+            print("Error?")
+        }
     }
     
     @objc func makeRecurring(recurButton: UIButton) {
         let path = IndexPath(row: recurButton.tag, section: 0)
         let cell = tableView.cellForRow(at: path) as! TaskCell
-        let buttonFrame : CGRect = originConverter(targetView: recurButton)
-        cell.ButtonWrapper.isHidden = true
-        var topConstraints: [NSLayoutConstraint?] = Array(repeating: nil, count: 12)
-        let ranges = [6, 3, 11, 0]
-        for i in 0...ranges[selectedUnit] {
-            recurrenceButtons[i] = UIButton(frame: buttonFrame)
-            recurrenceButtons[i].titleLabel?.font = UIFont(name: "Kannada Sangam MN", size: 14.0)
-            recurrenceButtons[i].translatesAutoresizingMaskIntoConstraints = false
-            recurrenceButtons[i].backgroundColor = UIColor.orange
-            recurrenceButtons[i].setTitle(AllUnits[selectedUnit][i], for: .normal)
-            tableView.addSubview(recurrenceButtons[i])
-            tableView.bringSubview(toFront: recurrenceButtons[i])
-            
-            topConstraints[i] = recurrenceButtons[i].topAnchor.constraint(equalTo: tableView.topAnchor)
-            
-            topConstraints[i]?.isActive = true
-            topConstraints[i]?.constant = buttonFrame.origin.y
-            recurrenceButtons[i].leftAnchor.constraint(equalTo: cell.ButtonWrapper.leftAnchor).isActive = true
-            recurrenceButtons[i].leftAnchor.constraint(equalTo: cell.ButtonWrapper.leftAnchor).constant = buttonFrame.origin.x
-            
-        }
-        
-        view.layoutIfNeeded()
-        let buttonSpacing : CGFloat = 10.0
-        let height: CGFloat = buttonFrame.height + buttonSpacing
-        let maxRangeNeeded: CGFloat = CGFloat(ceil(Double(ranges[selectedUnit] / 2)) * Double(height))
-        let tableHeight = tableView.frame.height
-        var firstButtonPosition: CGFloat = -50.0
-        /*if buttonFrame.origin.y < maxRangeNeeded {
-            firstButtonPosition = maxRangeNeeded + 10
-        } else if (buttonFrame.origin.y > tableHeight - maxRangeNeeded) {
-            firstButtonPosition = (tableHeight - maxRangeNeeded) - 10
-        } else {
-            firstButtonPosition = buttonFrame.origin.y - maxRangeNeeded
-        }*/
-        self.recurrenceButtons[0].topAnchor.constraint(equalTo: self.tableView.topAnchor).constant = firstButtonPosition
-        for i in 1...ranges[self.selectedUnit] {
-            topConstraints[i]?.isActive = false
-            self.recurrenceButtons[i].topAnchor.constraint(equalTo: self.recurrenceButtons[i - 1].bottomAnchor).isActive = true
-            self.recurrenceButtons[i].topAnchor.constraint(equalTo: self.recurrenceButtons[i - 1].bottomAnchor).constant = 10
-        }
-        UIView.animate(withDuration: 0.5) {
-            self.view.layoutIfNeeded()
-        }
+        print("Recur \(recurButton.tag)")
         
         
     }
@@ -242,7 +292,8 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 
                 UIView.animate(withDuration: 0.3) {
                     selectedTableCell.TaskField.center.y -= self.dragY
-                    selectedTableCell.ButtonWrapper.alpha = 0.0
+                    selectedTableCell.RecurringButton.alpha = 0.0
+                    selectedTableCell.RemindButton.alpha = 0.0
                 }
             }
         case .changed:
@@ -327,7 +378,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 let point = tableCollectionIntersect(it: i)
                 if point != CGPoint.zero {
                     let item = Items.items[selectedUnit][selectedCell]
-                    item.modifiedDate = Date()
+                    //item.modifiedDate = Date()
                     Items.items[i].append(item)
                     Items.items[selectedUnit].remove(at: selectedCell)
                     tableView.deleteRows(at: [IndexPath(row: selectedCell, section: 0)], with: .none)
@@ -339,7 +390,8 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                         self.dragLabel?.removeFromSuperview()
                         self.dragLabel = nil
                         selectedTableCell.TaskField.isHidden = false
-                        selectedTableCell.ButtonWrapper.alpha = 1.0
+                        selectedTableCell.RecurringButton.alpha = 1.0
+                        selectedTableCell.RemindButton.alpha = 1.0
                     })
                     isIntersection = true
                     break
@@ -349,7 +401,8 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             if (!isIntersection) {
                 UIView.animate(withDuration: 0.3, animations: { () -> Void in
                     self.dragLabel?.frame.origin.y = self.originalOrigin.y
-                    selectedTableCell.ButtonWrapper.alpha = 1.0
+                    selectedTableCell.RecurringButton.alpha = 1.0
+                    selectedTableCell.RemindButton.alpha = 1.0
                 }, completion: { finished in
                     self.dragLabel?.removeFromSuperview()
                     self.dragLabel = nil
@@ -367,10 +420,21 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             selectedCell = indexPath.row
         }
         
-        let cell = tableView.cellForRow(at: indexPath) as! TaskCell
-        if let field = cell.TaskField {
-            field.isEnabled = true
-            field.becomeFirstResponder()
+        let rows = tableView.numberOfRows(inSection: 0)
+        
+        if (indexPath.row == rows - 1) {
+            let cell = tableView.cellForRow(at: indexPath) as! AddCell
+            isCreationCell = true
+            if let field = cell.TaskField {
+                field.isEnabled = true
+                field.becomeFirstResponder()
+            }
+        } else {
+            let cell = tableView.cellForRow(at: indexPath) as! TaskCell
+            if let field = cell.TaskField {
+                field.isEnabled = true
+                field.becomeFirstResponder()
+            }
         }
     }
     
@@ -401,13 +465,6 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
 
-        if (indexPath.row == 4) {
-            AddNewItemButton.isEnabled = false
-            AddNewItemButton.tintColor = UIColor.clear
-        } else {
-            AddNewItemButton.isEnabled = true
-            AddNewItemButton.tintColor = nil
-        }
         tempUnit = indexPath.row
         if !editingTextField {
             selectedUnit = indexPath.row
@@ -435,17 +492,26 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     
     func textFieldDidEndEditing(_ textField: UITextField) {
         if let text = textField.text {
-            Items.items[selectedUnit][selectedCell].label = text
+            if isCreationCell {
+                selectedCell = tempCell
+                Items.items[selectedUnit].insert(Item(label: text), at: selectedCell)
+                tableView.insertRows(at: [IndexPath(row: selectedCell, section: 0)], with: .none)
+                textField.text = nil
+            } else {
+                Items.items[selectedUnit][selectedCell].label = text
+            }
         }
         
         textField.isEnabled = false
         selectedUnit = tempUnit
         selectedCell = tempCell
         editingTextField = false
+        isCreationCell = false
     }
     
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         self.view.endEditing(true)
+        resignFirstResponder()
         return false
     }
     
@@ -497,5 +563,42 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         } else {
             return CGPoint.zero
         }
+    }
+    
+    func formatDate(wrappedDate: Date?) -> String? {
+        //Yesterday, today, tomorrow
+        if let date = wrappedDate {
+            let gregorian = Calendar(identifier: .gregorian)
+            let dateComponents = gregorian.dateComponents([.day], from: date)
+            let todayComponents = gregorian.dateComponents([.day], from: Date())
+            let day = dateComponents.day!
+            let today = todayComponents.day!
+            
+            let dateFormatter = DateFormatter()
+            dateFormatter.timeStyle = .short
+
+            if today > day - 2 && today < day + 2 {
+                dateFormatter.dateStyle = .none
+                let dayString : String
+                if (today == day + 1) {
+                    dayString = "Yesterday"
+                } else if (today == day) {
+                    dayString = "Today"
+                } else {
+                    dayString = "Tomorrow"
+                }
+                return dayString + ", " + dateFormatter.string(from: date)
+            } else {
+                dateFormatter.dateStyle = .short
+                return dateFormatter.string(from: date)
+            }
+        } else {
+            return nil
+        }
+    }
+    
+    func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void)
+    {
+        completionHandler([.alert, .badge, .sound])
     }
 }

@@ -11,14 +11,22 @@ import UIKit
 class TaskCell: UITableViewCell {
     
     @IBOutlet var TaskField: UITextField!
-
+    @IBOutlet var DateField: UILabel!
+    
     @IBOutlet var LabelWrapper: UIView!
     @IBOutlet var LabelWrapperConstraint: NSLayoutConstraint!
     @IBOutlet var ImageLeftConstraint: NSLayoutConstraint!
     @IBOutlet var ImageRightConstraint: NSLayoutConstraint!
     @IBOutlet var Background: UIView!
-    @IBOutlet var ButtonWrapper: UIView!
     @IBOutlet var RecurringButton: UIButton!
+    @IBOutlet var RemindButton: UIButton!
+}
+
+class AddCell: UITableViewCell {
+    
+    @IBOutlet var AddButton: UIButton!
+    @IBOutlet var TaskField: UITextField!
+    
 }
 
 class TimeUnitCell: UICollectionViewCell {
