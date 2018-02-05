@@ -32,6 +32,12 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     private var dragLabel: UILabel?
     var dragX = 0.0
     var dragY: CGFloat = 0.0
+    var currX: Int = 0
+    var currY: Int = 0
+    var prevIncrement = 0
+    var precisionTimer = Timer()
+    var gregorian = Calendar(identifier: .gregorian)
+    var components = DateComponents()
     
     var originalOrigin = CGPoint()
     var editingTextField : Bool = false
@@ -133,30 +139,24 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     
     @objc func setTime(recognizer: UIPanGestureRecognizer) {
         let widthIncrement = UIScreen.main.bounds.width / 7
-        let heightIncrement = UIScreen.main.bounds.height / 96
+        let heightIncrement = UIScreen.main.bounds.height / 48
         
-        let x : Int = Int(floor(recognizer.location(in: view).x / widthIncrement))
-        let y : Int = Int(floor(recognizer.location(in: view).y / heightIncrement))
+        currX = Int(floor(recognizer.location(in: view).x / widthIncrement))
+        currY = Int(floor(recognizer.location(in: view).y / heightIncrement))
         
-        let gregorian = Calendar(identifier: .gregorian)
-        var components = gregorian.dateComponents([.year, .month, .day, .hour, .minute, .second], from: Date())
         
         switch recognizer.state {
         case .began:
-            let gregorian = Calendar(identifier: .gregorian)
+            precisionTimer = Timer.scheduledTimer(timeInterval: 0.5, target: self, selector: #selector(checkTimerHold), userInfo: nil, repeats: true)
+            
             components = gregorian.dateComponents([.year, .month, .day, .hour, .minute, .second], from: Date())
             selectedCell = tableCellCheck(recognizer: recognizer)
             selectedTableCell = tableView.cellForRow(at: IndexPath(item: selectedCell, section: 0)) as! TaskCell
         case .changed:
-            components.day = components.day! + x
-            components.hour = y / 4
-            components.minute = (y % 4) * 15
-            components.second = 0
-            Items.items[selectedUnit][selectedCell].reminderDate = gregorian.date(from: components)!
-            print("\(x), \(y)")
-            selectedTableCell.DateField.text = formatDate(wrappedDate: Items.items[selectedUnit][selectedCell].reminderDate)
-            tableView.reloadRows(at: [IndexPath(row: selectedCell, section:0)], with: .none)
+            prevIncrement = 0
+            updateRemindTime()
         case .ended:
+            precisionTimer.invalidate()
             let item = Items.items[selectedUnit][selectedCell]
             selectedTableCell.DateField.text = formatDate(wrappedDate: item.reminderDate)
             tableView.reloadRows(at: [IndexPath(row: selectedCell, section: 0)], with: .none)
@@ -600,5 +600,23 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void)
     {
         completionHandler([.alert, .badge, .sound])
+    }
+    
+    @objc func checkTimerHold() {
+        print("prevIncrement = \(prevIncrement)")
+        prevIncrement += 1
+        prevIncrement = prevIncrement % 6
+        updateRemindTime()
+    }
+    
+    func updateRemindTime() {
+        components = gregorian.dateComponents([.year, .month, .day, .hour, .minute, .second], from: Date())
+        components.day = components.day! + currX
+        components.hour = currY / 2
+        components.minute = (currY % 2) * 30 + (prevIncrement * 5)
+        components.second = 0
+        Items.items[selectedUnit][selectedCell].reminderDate = gregorian.date(from: components)!
+        selectedTableCell.DateField.text = formatDate(wrappedDate: Items.items[selectedUnit][selectedCell].reminderDate)
+        tableView.reloadRows(at: [IndexPath(row: selectedCell, section:0)], with: .none)
     }
 }

@@ -107,7 +107,7 @@
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
                                                 <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="vXT-pt-snq" userLabel="Background">
-                                                    <rect key="frame" x="0.0" y="0.0" width="375" height="69.5"/>
+                                                    <rect key="frame" x="0.0" y="0.0" width="375" height="70"/>
                                                     <subviews>
                                                         <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="checkmarkwhite" translatesAutoresizingMaskIntoConstraints="NO" id="m46-zu-KCy">
                                                             <rect key="frame" x="0.0" y="0.0" width="40" height="40"/>
@@ -130,10 +130,10 @@
                                                     </variation>
                                                 </view>
                                                 <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="go5-jl-1h4" userLabel="Label Wrapper">
-                                                    <rect key="frame" x="0.0" y="0.0" width="375" height="69.5"/>
+                                                    <rect key="frame" x="0.0" y="0.0" width="375" height="70"/>
                                                     <subviews>
                                                         <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="1Aa-9C-Ict" userLabel="Remind Button">
-                                                            <rect key="frame" x="10" y="10" width="50" height="20"/>
+                                                            <rect key="frame" x="10" y="19.5" width="50" height="31"/>
                                                             <color key="backgroundColor" red="0.41665736609999998" green="0.64483269870000004" blue="0.65035725229999997" alpha="1" colorSpace="calibratedRGB"/>
                                                             <constraints>
                                                                 <constraint firstAttribute="width" constant="50" id="XEI-3u-HTA"/>
@@ -143,42 +143,41 @@
                                                                 <color key="titleColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                                             </state>
                                                         </button>
-                                                        <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="648-dC-Ykg">
-                                                            <rect key="frame" x="10" y="40" width="50" height="19.5"/>
-                                                            <color key="backgroundColor" red="0.41665736607142856" green="0.64483269870448179" blue="0.65035725227591035" alpha="1" colorSpace="calibratedRGB"/>
-                                                            <fontDescription key="fontDescription" name="KannadaSangamMN" family="Kannada Sangam MN" pointSize="14"/>
-                                                            <state key="normal" title="recur">
-                                                                <color key="titleColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                                                            </state>
-                                                        </button>
                                                         <textField opaque="NO" contentMode="scaleToFill" enabled="NO" contentHorizontalAlignment="left" contentVerticalAlignment="center" text="New Task" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="HaX-zv-bwN">
-                                                            <rect key="frame" x="75" y="15.5" width="63" height="19"/>
+                                                            <rect key="frame" x="75" y="16" width="63" height="19"/>
                                                             <nil key="textColor"/>
                                                             <fontDescription key="fontDescription" name="KannadaSangamMN" family="Kannada Sangam MN" pointSize="14"/>
                                                             <textInputTraits key="textInputTraits"/>
                                                         </textField>
                                                         <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="M6t-gL-h1i">
-                                                            <rect key="frame" x="75" y="44.5" width="28" height="15.5"/>
+                                                            <rect key="frame" x="75" y="35" width="28" height="16"/>
                                                             <fontDescription key="fontDescription" name="KannadaSangamMN" family="Kannada Sangam MN" pointSize="12"/>
                                                             <nil key="textColor"/>
                                                             <nil key="highlightedColor"/>
                                                         </label>
+                                                        <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="648-dC-Ykg">
+                                                            <rect key="frame" x="325" y="20" width="40" height="31"/>
+                                                            <color key="backgroundColor" red="0.41665736607142856" green="0.64483269870448179" blue="0.65035725227591035" alpha="1" colorSpace="calibratedRGB"/>
+                                                            <constraints>
+                                                                <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="40" id="JlC-vG-zjI"/>
+                                                            </constraints>
+                                                            <fontDescription key="fontDescription" name="KannadaSangamMN" family="Kannada Sangam MN" pointSize="14"/>
+                                                            <state key="normal" title="recur">
+                                                                <color key="titleColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                                                            </state>
+                                                        </button>
                                                     </subviews>
                                                     <color key="backgroundColor" red="0.8901960784313725" green="0.91764705882352937" blue="0.99215686274509807" alpha="1" colorSpace="calibratedRGB"/>
                                                     <color key="tintColor" red="1" green="1" blue="1" alpha="1" colorSpace="calibratedRGB"/>
                                                     <constraints>
-                                                        <constraint firstItem="1Aa-9C-Ict" firstAttribute="width" secondItem="648-dC-Ykg" secondAttribute="width" id="0CI-0D-Iot"/>
                                                         <constraint firstItem="HaX-zv-bwN" firstAttribute="leading" secondItem="1Aa-9C-Ict" secondAttribute="trailing" constant="15" id="0Sz-q6-0rU"/>
-                                                        <constraint firstItem="M6t-gL-h1i" firstAttribute="top" secondItem="HaX-zv-bwN" secondAttribute="bottom" constant="10" id="0vq-av-KlS"/>
+                                                        <constraint firstItem="M6t-gL-h1i" firstAttribute="top" secondItem="HaX-zv-bwN" secondAttribute="bottom" id="0vq-av-KlS"/>
                                                         <constraint firstItem="HaX-zv-bwN" firstAttribute="centerY" secondItem="go5-jl-1h4" secondAttribute="centerY" constant="-10" id="3nh-a3-ekQ"/>
+                                                        <constraint firstAttribute="trailing" secondItem="648-dC-Ykg" secondAttribute="trailing" constant="10" id="586-ab-l1a"/>
                                                         <constraint firstItem="1Aa-9C-Ict" firstAttribute="leading" secondItem="go5-jl-1h4" secondAttribute="leading" constant="10" id="LvO-Uy-EXA"/>
-                                                        <constraint firstItem="M6t-gL-h1i" firstAttribute="leading" secondItem="648-dC-Ykg" secondAttribute="trailing" constant="15" id="Zhm-cg-8bQ"/>
-                                                        <constraint firstItem="648-dC-Ykg" firstAttribute="top" secondItem="1Aa-9C-Ict" secondAttribute="bottom" constant="10" id="cgO-aE-sQi"/>
-                                                        <constraint firstItem="648-dC-Ykg" firstAttribute="leading" secondItem="go5-jl-1h4" secondAttribute="leading" constant="10" id="dof-Zd-fSr"/>
-                                                        <constraint firstItem="1Aa-9C-Ict" firstAttribute="top" secondItem="go5-jl-1h4" secondAttribute="top" constant="10" id="dwp-lR-bhG"/>
-                                                        <constraint firstItem="1Aa-9C-Ict" firstAttribute="height" secondItem="648-dC-Ykg" secondAttribute="height" id="lWU-zg-864"/>
-                                                        <constraint firstItem="648-dC-Ykg" firstAttribute="top" secondItem="1Aa-9C-Ict" secondAttribute="bottom" constant="10" id="mMg-Ev-aJ9"/>
-                                                        <constraint firstAttribute="bottom" secondItem="648-dC-Ykg" secondAttribute="bottom" constant="10" id="vz7-Wo-Dj4"/>
+                                                        <constraint firstItem="1Aa-9C-Ict" firstAttribute="centerY" secondItem="go5-jl-1h4" secondAttribute="centerY" id="YUX-AX-aYB"/>
+                                                        <constraint firstItem="648-dC-Ykg" firstAttribute="centerY" secondItem="go5-jl-1h4" secondAttribute="centerY" id="iIz-ah-WbW"/>
+                                                        <constraint firstItem="M6t-gL-h1i" firstAttribute="leading" secondItem="HaX-zv-bwN" secondAttribute="leading" id="qxQ-wY-pei"/>
                                                     </constraints>
                                                 </view>
                                             </subviews>
