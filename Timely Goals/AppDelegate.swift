@@ -20,8 +20,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
         
-        let navController = window!.rootViewController as! UINavigationController
-        let viewController = navController.topViewController as! ViewController
+        let viewController = window!.rootViewController as! ViewController
         viewController.Items = itemStore
         
         
@@ -55,8 +54,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func applicationDidBecomeActive(_ application: UIApplication) {
         // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
-        let navController = window!.rootViewController as! UINavigationController
-        let viewController = navController.topViewController as! ViewController
+        let viewController = window!.rootViewController as! ViewController
         
         if (viewController.tableView == nil) {
             return

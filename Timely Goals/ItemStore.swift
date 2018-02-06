@@ -10,7 +10,8 @@ import UIKit
 
 class ItemStore {
     
-    var items : [[Item]] = Array(repeating: [], count: 9)
+    var items : [[Item]] = []
+    var listNames: [String] = []
     let itemArchiveURL: URL = {
         let documentsDirectories = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
         let documentDirectory = documentsDirectories.first!

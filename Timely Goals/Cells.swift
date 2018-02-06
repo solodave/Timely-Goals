@@ -29,9 +29,14 @@ class AddCell: UITableViewCell {
     
 }
 
-class TimeUnitCell: UICollectionViewCell {
+class ListCell: UICollectionViewCell {
     
     
-    @IBOutlet var TimeUnitLabel: UILabel!
+    @IBOutlet var ListField: UITextField!
+    var intrinsicSize = CGSize(width: 60.0, height: 40.0)
+    
+}
+
+class AddList: UICollectionViewCell {
     
 }

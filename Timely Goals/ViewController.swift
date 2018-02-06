@@ -14,7 +14,6 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     var isGrantedNotificationAccess:Bool = false
     
     var Items: ItemStore!
-    var TimeUnits = ["Day", "Week", "Month", "Year", "Old"]
     var AllUnits = [[String]]()
     var DayUnits = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
     var WeekUnits = ["Every Week", "Every 2nd Week", "Every 3rd Week", "Every 4th Week"]
@@ -44,7 +43,6 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     var panLocation: CGPoint? = nil
     var originalConstant: CGFloat? = nil
     
-    @IBOutlet var GoalLabel: UINavigationItem!
     @IBOutlet var tableView: UITableView!
     @IBOutlet var collectionView: UICollectionView!
     
@@ -66,10 +64,15 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         
         var itemCount = 0
-        for item in Items.items[selectedUnit] {
-            itemCount += item.isDoneForNow ? 0 : 1
+        
+        if (Items.items.count > 0) {
+            for item in Items.items[selectedUnit] {
+                itemCount += item.isDoneForNow ? 0 : 1
+            }
+            return itemCount + 1
+        } else {
+            return 0
         }
-        return itemCount + 1
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -79,7 +82,6 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         if (indexPath.row == rows - 1) {
             let cell = tableView.dequeueReusableCell(withIdentifier: "AddCell", for: indexPath) as! AddCell
             cell.AddButton.addTarget(self, action: #selector(nameNewTask), for: .touchUpInside)
-            cell.AddButton.tag = indexPath.row
             cell.TaskField.delegate = self
             return cell
         } else {
@@ -127,8 +129,9 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     }
     
     @objc func nameNewTask(button: UIButton) {
-        selectedCell = button.tag
-        let path = IndexPath(row: button.tag, section: 0)
+        selectedCell = tableView.numberOfRows(inSection: 0) - 1
+        tempCell = selectedCell
+        let path = IndexPath(row: selectedCell, section: 0)
         let cell = tableView.cellForRow(at: path) as! AddCell
         isCreationCell = true
         if let field = cell.TaskField {
@@ -320,7 +323,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             }
             
             var isIntersection = false
-            for i in 0...TimeUnits.count - 1 {
+            for i in 0...Items.listNames.count - 1 {
                 let point = tableCollectionIntersect(it: i)
                 if point != CGPoint.zero {
                     isIntersection = true
@@ -374,7 +377,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             selectedTableCell.TaskField.isHidden = true
             
             var isIntersection = false
-            for i in 0...TimeUnits.count - 1 {
+            for i in 0...Items.listNames.count - 1 {
                 let point = tableCollectionIntersect(it: i)
                 if point != CGPoint.zero {
                     let item = Items.items[selectedUnit][selectedCell]
@@ -413,6 +416,14 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             print("Default?")
         }
     }
+    
+    @objc func changeListName (recognizer: UILongPressGestureRecognizer) {
+        selectedUnit = collectionCellCheck(recognizer: recognizer)
+        let cell = collectionView.cellForItem(at: IndexPath(item: selectedUnit, section:0)) as! ListCell
+        cell.ListField.isEnabled = true
+        cell.ListField.becomeFirstResponder()
+    }
+
 
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tempCell = indexPath.row
@@ -439,80 +450,150 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     }
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return Items.items[4].count > 0 ? 5 : 4
+        return Items.items.count + 1
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         
-        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "TimeUnitCell", for: indexPath) as! TimeUnitCell
-        cell.TimeUnitLabel.text = TimeUnits[indexPath.row]
+        let cells = collectionView.numberOfItems(inSection: 0)
         
-        UIView.animate(withDuration: 0.3) {
-            cell.backgroundColor = UIColor.clear
-        }
-
-        cell.TimeUnitLabel.textColor = indexPath.row == 4 ? UIColor.red : UIColor.black
-        cell.layer.borderWidth = indexPath.row == selectedUnit ? 1.0 : 0.0
-        cell.layer.borderColor = indexPath.row == selectedUnit ? UIColor.blue.cgColor : UIColor.clear.cgColor
-
-        if let dCell = dropCell, dCell == indexPath.row {
-            UIView.animate(withDuration: 0.3) {
-                cell.backgroundColor = UIColor.red.withAlphaComponent(0.5)
+        if (indexPath.row == cells - 1) {
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "AddList", for: indexPath) as! AddList
+            return cell
+        } else {
+            
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "ListCell", for: indexPath) as! ListCell
+            cell.ListField.delegate = self
+            cell.ListField.text = Items.listNames[indexPath.row]
+            if (cell.ListField.text != nil && cell.ListField.text != "") {
+                cell.ListField.isEnabled = false
+            } else {
+                cell.ListField.isEnabled = true
             }
+            let lpGestureRecognizer: UILongPressGestureRecognizer = UILongPressGestureRecognizer(target: self, action: #selector(changeListName))
+            lpGestureRecognizer.minimumPressDuration = 0.5
+            cell.contentView.addGestureRecognizer(lpGestureRecognizer)
+            
+            UIView.animate(withDuration: 0.3) {
+                cell.backgroundColor = UIColor.clear
+            }
+            cell.layer.borderWidth = indexPath.row == selectedUnit ? 1.0 : 0.0
+            cell.layer.borderColor = indexPath.row == selectedUnit ? UIColor.blue.cgColor : UIColor.clear.cgColor
+
+            if let dCell = dropCell, dCell == indexPath.row {
+                UIView.animate(withDuration: 0.3) {
+                    cell.backgroundColor = UIColor.red.withAlphaComponent(0.5)
+                }
+            }
+            return cell
         }
-        return cell
     }
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
 
-        tempUnit = indexPath.row
-        if !editingTextField {
+        let cells = collectionView.numberOfItems(inSection: 0)
+        
+        if (indexPath.row == cells - 1) {
+            if (editingTextField) {
+                return
+            }
+            Items.items.append([])
+            Items.listNames.append("")
+            collectionView.insertItems(at: [indexPath])
+            let cell = collectionView.cellForItem(at: indexPath) as! ListCell
+            cell.ListField.becomeFirstResponder()
             selectedUnit = indexPath.row
+        } else {
+            tempUnit = indexPath.row
+            if !editingTextField {
+                selectedUnit = indexPath.row
+            }
+        
+            collectionView.reloadData()
+            collectionView.collectionViewLayout.invalidateLayout()
+            tableView.reloadData()
         }
-        
-        let goalLabelTitles = ["Daily", "Weekly", "Monthly", "Yearly", "Overdue"]
-        GoalLabel.title = "\(goalLabelTitles[indexPath.row]) Goals"
-
-        collectionView.reloadData()
-        tableView.reloadData()
-        
     }
     
-    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumInteritemSpacingForSectionAt section: Int) -> CGFloat {
+    // Dynamic Collection View Cell width
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+        if let cell = collectionView.cellForItem(at: indexPath) as? ListCell {
+            return cell.intrinsicSize
+        }
+        return CGSize(width: 60.0, height: 40.0)
+    }
+    
+    /*func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumInteritemSpacingForSectionAt section: Int) -> CGFloat {
         
         let count = CGFloat(Items.items[4].count > 0 ? 5 : 4)
         let width : CGFloat = collectionView.frame.width
         let totalcontentwidth : CGFloat = 45.0 * count
        return (width - totalcontentwidth) / count
-    }
+    }*/
     
     func textFieldDidBeginEditing(_ textField: UITextField) {
         editingTextField = true
     }
     
     func textFieldDidEndEditing(_ textField: UITextField) {
-        if let text = textField.text {
-            if isCreationCell {
-                selectedCell = tempCell
-                Items.items[selectedUnit].insert(Item(label: text), at: selectedCell)
-                tableView.insertRows(at: [IndexPath(row: selectedCell, section: 0)], with: .none)
-                textField.text = nil
+        // If tag is 99
+        if (textField.tag == 99) {
+            if let text = textField.text, text != "" {
+                if (text.count > 15) {
+                    textField.text = String(text.prefix(15))
+                }
+                Items.listNames[selectedUnit] = textField.text!
+                let cell = collectionView.cellForItem(at: IndexPath(item: selectedUnit, section: 0)) as! ListCell
+                cell.intrinsicSize = cell.ListField.intrinsicContentSize
+
+                collectionView.reloadItems(at: [IndexPath(item:selectedUnit, section:0)])
+                tableView.reloadData()
             } else {
-                Items.items[selectedUnit][selectedCell].label = text
+                Items.listNames.remove(at: selectedUnit)
+                Items.items.remove(at: selectedUnit)
+
+                collectionView.deleteItems(at: [IndexPath(item:selectedUnit, section:0)])
+                collectionView.reloadData()
             }
+        } else {
+            if let text = textField.text {
+                if isCreationCell {
+                    selectedCell = tempCell
+                    Items.items[selectedUnit].insert(Item(label: text), at: selectedCell)
+                    tableView.insertRows(at: [IndexPath(row: selectedCell, section: 0)], with: .none)
+                    textField.text = nil
+                } else {
+                    Items.items[selectedUnit][selectedCell].label = text
+                }
+            }
+            
+            selectedUnit = tempUnit
+            selectedCell = tempCell
+
+            isCreationCell = false
         }
-        
         textField.isEnabled = false
-        selectedUnit = tempUnit
-        selectedCell = tempCell
         editingTextField = false
-        isCreationCell = false
     }
     
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         self.view.endEditing(true)
         resignFirstResponder()
         return false
+    }
+    
+    func collectionCellCheck(recognizer: UIGestureRecognizer) -> Int {
+        for i in 0...Items.items.count - 1 {
+            let cell = collectionView.cellForItem(at: IndexPath(item: i, section: 0))
+            
+            let recframe = originConverter(targetView: (recognizer.view)!)
+            let newframe = originConverter(targetView: cell!)
+            
+            if (recframe.intersects(newframe)) {
+                return i
+            }
+        }
+        return -1
     }
     
     func tableCellCheck(recognizer: UIGestureRecognizer) -> Int {
