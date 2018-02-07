@@ -8,7 +8,7 @@
 
 import UIKit
 
-class ItemStore {
+class ItemStore  {
     
     var items : [[Item]] = []
     var listNames: [String] = []

@@ -43,11 +43,17 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     var panLocation: CGPoint? = nil
     var originalConstant: CGFloat? = nil
     
+    
+    @IBOutlet var PanInstructions: UILabel!
+    @IBOutlet var PanInstructionsXPosition: NSLayoutConstraint!
+    
+    @IBOutlet var tableBottom: NSLayoutConstraint!
     @IBOutlet var tableView: UITableView!
     @IBOutlet var collectionView: UICollectionView!
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        PanInstructions.isHidden = true
         tableView.delegate = self
         tableView.dataSource = self
         collectionView.delegate = self
@@ -59,6 +65,10 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge], completionHandler: { (granted, error) in
             self.isGrantedNotificationAccess = granted
         })
+        
+        NotificationCenter.default.addObserver(self, selector: #selector(ViewController.keyboardWillShow), name: NSNotification.Name.UIKeyboardWillShow, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(ViewController.keyboardWillHide), name: NSNotification.Name.UIKeyboardWillHide, object: nil)
+
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -67,7 +77,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         
         if (Items.items.count > 0) {
             for item in Items.items[selectedUnit] {
-                itemCount += item.isDoneForNow ? 0 : 1
+                itemCount += 1
             }
             return itemCount + 1
         } else {
@@ -155,10 +165,26 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             components = gregorian.dateComponents([.year, .month, .day, .hour, .minute, .second], from: Date())
             selectedCell = tableCellCheck(recognizer: recognizer)
             selectedTableCell = tableView.cellForRow(at: IndexPath(item: selectedCell, section: 0)) as! TaskCell
+            
+            PanInstructions.isHidden = false
+            let halfHeight = UIScreen.main.bounds.height / 2
+            if (recognizer.location(in: view).y < halfHeight) {
+                PanInstructionsXPosition.constant = halfHeight - 100
+            } else {
+                PanInstructionsXPosition.constant = 150 - halfHeight
+            }
+            let item = Items.items[selectedUnit][selectedCell]
+            let dateString = formatDate(wrappedDate: item.reminderDate) ?? ""
+            PanInstructions.text = "Drag To Set Time\nHold For Precision\n" + dateString
+            
         case .changed:
             prevIncrement = 0
+            let item = Items.items[selectedUnit][selectedCell]
+            let dateString = formatDate(wrappedDate: item.reminderDate) ?? ""
+            PanInstructions.text = "Drag To Set Time\nHold For Precision\n" + dateString
             updateRemindTime()
         case .ended:
+            PanInstructions.isHidden = true
             precisionTimer.invalidate()
             let item = Items.items[selectedUnit][selectedCell]
             selectedTableCell.DateField.text = formatDate(wrappedDate: item.reminderDate)
@@ -240,10 +266,8 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 UIView.animate(withDuration: 0.2, animations: { () -> Void in
                     self.view.layoutIfNeeded()
                 }, completion: { finished in
-                    self.Items.items[self.selectedUnit][self.selectedCell].isDoneForNow = true
-                    if self.Items.items[self.selectedUnit][self.selectedCell].isRecurring() {
+                    if self.Items.items[self.selectedUnit][self.selectedCell].isRecurring {
                         let item = self.Items.items[self.selectedUnit][self.selectedCell]
-                        item.oldPosition = self.selectedCell
                         self.Items.items[self.selectedUnit + 5].append(item)
                     }
                     self.Items.items[self.selectedUnit].remove(at: self.selectedCell)
@@ -285,7 +309,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 label.text = Items.items[selectedUnit][selectedCell].label
                 label.font = UIFont(name: "Kannada Sangam MN", size: 14.0)
                 dragLabel = label
-                dragX = Double((dragLabel?.center.x)! - 81.0)
+                dragX = Double((dragLabel?.center.x)! - 2.0)
                 dragY = (dragLabel?.center.y)! - recognizer.location(in:view).y
                 
                 view.addSubview(dragLabel!)
@@ -417,11 +441,43 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         }
     }
     
-    @objc func changeListName (recognizer: UILongPressGestureRecognizer) {
+    @objc func listOptions (recognizer: UILongPressGestureRecognizer) {
         selectedUnit = collectionCellCheck(recognizer: recognizer)
+        let cell = collectionView.cellForItem(at: IndexPath(item: selectedUnit, section:0)) as! ListCell
+        
+        let menu = UIMenuController.shared
+        
+            becomeFirstResponder()
+        
+            let renameItem = UIMenuItem(title: "Rename", action: #selector(renameList))
+            let deleteItem = UIMenuItem(title: "Delete", action: #selector(deleteList))
+        
+            menu.menuItems = [renameItem, deleteItem]
+            
+            let targetRect = CGRect(x: cell.center.x, y: cell.frame.height + 10, width: 2, height: 2)
+            menu.setTargetRect(targetRect, in: self.view)
+            menu.setMenuVisible(true, animated: true)
+        
+        
+
+    }
+    @objc func renameList() {
         let cell = collectionView.cellForItem(at: IndexPath(item: selectedUnit, section:0)) as! ListCell
         cell.ListField.isEnabled = true
         cell.ListField.becomeFirstResponder()
+    }
+    
+    @objc func deleteList() {
+        Items.items.remove(at: selectedUnit)
+        Items.listNames.remove(at: selectedUnit);
+        collectionView.deleteItems(at: [IndexPath(item: selectedUnit, section:0)])
+        if (selectedUnit > 0) {
+            selectedUnit -= 1
+        } else {
+            selectedUnit = 0
+        }
+        collectionView.reloadData()
+        tableView.reloadData()
     }
 
 
@@ -470,7 +526,8 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             } else {
                 cell.ListField.isEnabled = true
             }
-            let lpGestureRecognizer: UILongPressGestureRecognizer = UILongPressGestureRecognizer(target: self, action: #selector(changeListName))
+            
+            let lpGestureRecognizer: UILongPressGestureRecognizer = UILongPressGestureRecognizer(target: self, action: #selector(listOptions))
             lpGestureRecognizer.minimumPressDuration = 0.5
             cell.contentView.addGestureRecognizer(lpGestureRecognizer)
             
@@ -502,6 +559,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             collectionView.insertItems(at: [indexPath])
             let cell = collectionView.cellForItem(at: indexPath) as! ListCell
             cell.ListField.becomeFirstResponder()
+            tempUnit = selectedUnit
             selectedUnit = indexPath.row
         } else {
             tempUnit = indexPath.row
@@ -515,21 +573,9 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         }
     }
     
-    // Dynamic Collection View Cell width
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        if let cell = collectionView.cellForItem(at: indexPath) as? ListCell {
-            return cell.intrinsicSize
-        }
-        return CGSize(width: 60.0, height: 40.0)
+        return CGSize(width: 120.0, height: 40.0)
     }
-    
-    /*func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumInteritemSpacingForSectionAt section: Int) -> CGFloat {
-        
-        let count = CGFloat(Items.items[4].count > 0 ? 5 : 4)
-        let width : CGFloat = collectionView.frame.width
-        let totalcontentwidth : CGFloat = 45.0 * count
-       return (width - totalcontentwidth) / count
-    }*/
     
     func textFieldDidBeginEditing(_ textField: UITextField) {
         editingTextField = true
@@ -539,20 +585,16 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         // If tag is 99
         if (textField.tag == 99) {
             if let text = textField.text, text != "" {
-                if (text.count > 15) {
-                    textField.text = String(text.prefix(15))
-                }
                 Items.listNames[selectedUnit] = textField.text!
-                let cell = collectionView.cellForItem(at: IndexPath(item: selectedUnit, section: 0)) as! ListCell
-                cell.intrinsicSize = cell.ListField.intrinsicContentSize
-
-                collectionView.reloadItems(at: [IndexPath(item:selectedUnit, section:0)])
+                tempUnit = selectedUnit
+                collectionView.reloadData()
                 tableView.reloadData()
             } else {
                 Items.listNames.remove(at: selectedUnit)
                 Items.items.remove(at: selectedUnit)
 
                 collectionView.deleteItems(at: [IndexPath(item:selectedUnit, section:0)])
+                selectedUnit = tempUnit
                 collectionView.reloadData()
             }
         } else {
@@ -580,6 +622,12 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         self.view.endEditing(true)
         resignFirstResponder()
         return false
+    }
+    func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
+        if (textField.tag == 99) {
+            return (textField.text?.count ?? 0) < 10 || string == ""
+        }
+        return true
     }
     
     func collectionCellCheck(recognizer: UIGestureRecognizer) -> Int {
@@ -699,5 +747,21 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         Items.items[selectedUnit][selectedCell].reminderDate = gregorian.date(from: components)!
         selectedTableCell.DateField.text = formatDate(wrappedDate: Items.items[selectedUnit][selectedCell].reminderDate)
         tableView.reloadRows(at: [IndexPath(row: selectedCell, section:0)], with: .none)
+    }
+    
+    override var canBecomeFirstResponder: Bool {
+        return true
+    }
+    
+    @objc func keyboardWillShow(notification: NSNotification) {
+        if let keyboardSize = (notification.userInfo?[UIKeyboardFrameBeginUserInfoKey] as? NSValue)?.cgRectValue {
+                tableBottom.constant = -keyboardSize.height
+                self.view.layoutIfNeeded()
+            }
+        }
+    
+    @objc func keyboardWillHide(notification: NSNotification) {
+        tableBottom.constant = 0
+        self.view.layoutIfNeeded()
     }
 }
