@@ -20,6 +20,7 @@ class TaskCell: UITableViewCell {
     @IBOutlet var Background: UIView!
     @IBOutlet var RecurringButton: UIButton!
     @IBOutlet var RemindButton: UIButton!
+    @IBOutlet var whiteMark: UIImageView!
 }
 
 class AddCell: UITableViewCell {

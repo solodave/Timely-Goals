@@ -16,6 +16,7 @@
 		AD8168E11FFD7810002EBC59 /* Timely_GoalsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD8168E01FFD7810002EBC59 /* Timely_GoalsTests.swift */; };
 		AD8168EC1FFD7810002EBC59 /* Timely_GoalsUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD8168EB1FFD7810002EBC59 /* Timely_GoalsUITests.swift */; };
 		AD8168FA1FFD7EE4002EBC59 /* Cells.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD8168F91FFD7EE4002EBC59 /* Cells.swift */; };
+		ADE8FD7F202E112000CD7DAD /* ItemList.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADE8FD7E202E112000CD7DAD /* ItemList.swift */; };
 		ADFAA8C31FFEA503009B02B0 /* Item.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADFAA8C21FFEA503009B02B0 /* Item.swift */; };
 		ADFAA8CE1FFEA7C7009B02B0 /* Model.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = ADFAA8CC1FFEA7C7009B02B0 /* Model.xcdatamodeld */; };
 /* End PBXBuildFile section */
@@ -54,6 +55,7 @@
 		AD8168ED1FFD7810002EBC59 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		AD8168F91FFD7EE4002EBC59 /* Cells.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Cells.swift; sourceTree = "<group>"; };
 		ADDA3DB0201A573B00901103 /* Timely Goals.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "Timely Goals.entitlements"; sourceTree = "<group>"; };
+		ADE8FD7E202E112000CD7DAD /* ItemList.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ItemList.swift; sourceTree = "<group>"; };
 		ADFAA8C21FFEA503009B02B0 /* Item.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Item.swift; sourceTree = "<group>"; };
 		ADFAA8CD1FFEA7C7009B02B0 /* Model.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = Model.xcdatamodel; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -117,6 +119,7 @@
 				ADFAA8C21FFEA503009B02B0 /* Item.swift */,
 				AD26D2EC2019182900482626 /* ItemStore.swift */,
 				ADFAA8CC1FFEA7C7009B02B0 /* Model.xcdatamodeld */,
+				ADE8FD7E202E112000CD7DAD /* ItemList.swift */,
 			);
 			path = "Timely Goals";
 			sourceTree = "<group>";
@@ -281,6 +284,7 @@
 				ADFAA8C31FFEA503009B02B0 /* Item.swift in Sources */,
 				AD8168FA1FFD7EE4002EBC59 /* Cells.swift in Sources */,
 				AD26D2ED2019182900482626 /* ItemStore.swift in Sources */,
+				ADE8FD7F202E112000CD7DAD /* ItemList.swift in Sources */,
 				ADFAA8CE1FFEA7C7009B02B0 /* Model.xcdatamodeld in Sources */,
 				AD8168CB1FFD7810002EBC59 /* ViewController.swift in Sources */,
 				AD8168C91FFD7810002EBC59 /* AppDelegate.swift in Sources */,

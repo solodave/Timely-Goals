@@ -116,7 +116,7 @@
                                                 <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="vXT-pt-snq" userLabel="Background">
                                                     <rect key="frame" x="0.0" y="0.0" width="320" height="70"/>
                                                     <subviews>
-                                                        <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="checkmarkwhite" translatesAutoresizingMaskIntoConstraints="NO" id="m46-zu-KCy">
+                                                        <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="checkmarkwhite" translatesAutoresizingMaskIntoConstraints="NO" id="m46-zu-KCy" userLabel="whitemark">
                                                             <rect key="frame" x="0.0" y="0.0" width="40" height="40"/>
                                                             <constraints>
                                                                 <constraint firstAttribute="width" constant="40" id="5gC-xJ-xM0"/>
@@ -210,6 +210,7 @@
                                             <outlet property="RecurringButton" destination="648-dC-Ykg" id="9ad-HE-pJm"/>
                                             <outlet property="RemindButton" destination="1Aa-9C-Ict" id="vHb-mq-ExQ"/>
                                             <outlet property="TaskField" destination="HaX-zv-bwN" id="Edz-ym-a7y"/>
+                                            <outlet property="whiteMark" destination="m46-zu-KCy" id="s4k-dS-Abd"/>
                                         </connections>
                                     </tableViewCell>
                                     <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="none" indentationWidth="10" reuseIdentifier="AddCell" id="kRq-M4-eLP" customClass="AddCell" customModule="Timely_Goals" customModuleProvider="target">
@@ -265,7 +266,7 @@
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Drag To Set Time" textAlignment="center" lineBreakMode="wordWrap" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="lpB-6s-O2K" userLabel="Pan Instructions">
                                 <rect key="frame" x="36" y="264" width="248" height="41"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="34"/>
-                                <nil key="textColor"/>
+                                <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                 <nil key="highlightedColor"/>
                             </label>
                         </subviews>

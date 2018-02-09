@@ -29,6 +29,11 @@ class Item: NSObject, NSCoding {
         aCoder.encode(label, forKey: "label")
         aCoder.encode(reminderDate, forKey: "reminderDate")
         aCoder.encode(id, forKey: "id")
+        aCoder.encode(isRecurring, forKey: "isRecurring")
+        aCoder.encode(recurrencePeriod, forKey: "recurrencePeriod")
+        aCoder.encode(recurrenceUnit, forKey: "recurrenceUnit")
+        aCoder.encode(daysOfWeek, forKey: "daysOfWeek")
+        aCoder.encode(daysOfMonth, forKey: "daysOfMonth")
 
     }
     
@@ -36,6 +41,11 @@ class Item: NSObject, NSCoding {
         label = aDecoder.decodeObject(forKey: "label") as! String
         reminderDate = aDecoder.decodeObject(forKey: "reminderDate") as? Date
         id = aDecoder.decodeInteger(forKey: "id")
+        isRecurring = aDecoder.decodeBool(forKey: "isRecurring")
+        recurrencePeriod = aDecoder.decodeInteger(forKey: "recurrencePeriod")
+        recurrenceUnit = aDecoder.decodeInteger(forKey: "recurrenceUnit")
+        daysOfWeek = aDecoder.decodeObject(forKey: "daysOfWeek") as! [Int]
+        daysOfMonth = aDecoder.decodeObject(forKey: "daysOfMonth") as! [Int]
 
         super.init()
     }

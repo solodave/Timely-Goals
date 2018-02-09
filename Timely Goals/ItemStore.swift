@@ -10,8 +10,7 @@ import UIKit
 
 class ItemStore  {
     
-    var items : [[Item]] = []
-    var listNames: [String] = []
+    var itemLists : [ItemList] = []
     let itemArchiveURL: URL = {
         let documentsDirectories = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
         let documentDirectory = documentsDirectories.first!
@@ -19,12 +18,12 @@ class ItemStore  {
     }()
     
     init() {
-        if let archivedItems = NSKeyedUnarchiver.unarchiveObject(withFile: itemArchiveURL.path)as? [[Item]] {
-            items = archivedItems
+        if let archivedItems = NSKeyedUnarchiver.unarchiveObject(withFile: itemArchiveURL.path)as? [ItemList] {
+            itemLists = archivedItems
         }
     }
     
     func saveChanges() -> Bool {
-        return NSKeyedArchiver.archiveRootObject(items, toFile: itemArchiveURL.path)
+        return NSKeyedArchiver.archiveRootObject(itemLists, toFile: itemArchiveURL.path)
     }
 }

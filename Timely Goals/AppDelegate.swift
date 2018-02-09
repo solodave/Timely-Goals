@@ -56,80 +56,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
         let viewController = window!.rootViewController as! ViewController
         
-        if (viewController.tableView == nil) {
-            return
-        }
-        let calendar = Calendar.current
-        let currentDate = Date()
-        
-        // Specify date components
-        /*var dateComponents = DateComponents()
-        dateComponents.year = 2018
-        dateComponents.month = 1
-        dateComponents.day = 11
-        dateComponents.timeZone = TimeZone(abbreviation: "EST")
-        
-        // Create date from components
-        let userCalendar = Calendar.current // user calendar
-        let currentDate = userCalendar.date(from: dateComponents)!*/
-        
-        
-       /* for i in 0...viewController.Items.items.count - 1 {
-            if viewController.Items.items[i].count == 0 {
-                continue
-            }
-            var j = 0
-            while j < viewController.Items.items[i].count {
-                let date1 = calendar.startOfDay(for: viewController.Items.items[i][j].modifiedDate)
-                let date2 = calendar.startOfDay(for: currentDate)
-                var newPeriod : Bool = false
-                switch i {
-                case 0, 5:
-                    let difference = calendar.dateComponents([.day], from: date1, to: date2)
-                    if (difference.day! > 0) {
-                        newPeriod = true
-                    }
-                case 1, 6:
-                    let difference = calendar.dateComponents([.weekdayOrdinal], from: date1, to: date2)
-                    if (difference.weekdayOrdinal! > 0) {
-                        newPeriod = true
-                    }
-                case 2, 7:
-                    let difference = calendar.dateComponents([.month], from: date1, to: date2)
-                    if (difference.month! > 0) {
-                        newPeriod = true
-                    }
-                case 3, 8:
-                    let difference = calendar.dateComponents([.year], from: date1, to: date2)
-                    if (difference.year! > 0) {
-                        newPeriod = true
-                    }
-                case 4:
-                    break
-                default:
-                    print("Something seriously went wrong in the app delegate")
-                }
-                if newPeriod {
-                    if viewController.Items.items[i][j].isRecurring() {
-                        viewController.Items.items[i][j].isDoneForNow = false
-                        viewController.Items.items[i][j].modifiedDate = Date()
-                        if (i > 4) {
-                            let item = viewController.Items.items[i][j]
-                            viewController.Items.items[i - 5].insert(item, at: item.oldPosition)
-                            viewController.Items.items[i].remove(at: j)
-                            j -= 1
-                        }
-                    } else {
-                        let item = viewController.Items.items[i][j]
-                        viewController.Items.items[i].remove(at: j)
-                        j -= 1
-                        viewController.Items.items[4].append(item)
-                    }
-                }
-                j += 1
-            }
+        if (viewController.tableView != nil) {
             viewController.tableView.reloadData()
-        }*/
+        }
     }
 
     func applicationWillTerminate(_ application: UIApplication) {
