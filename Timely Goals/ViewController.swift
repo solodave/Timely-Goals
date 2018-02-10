@@ -52,6 +52,12 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     @IBOutlet var tableView: UITableView!
     @IBOutlet var collectionView: UICollectionView!
     
+    @IBOutlet var DatePicker: UIDatePicker!
+    
+    @IBOutlet var DatePickerConstraint: NSLayoutConstraint!
+    
+    var tapGesture: UITapGestureRecognizer!
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         PanInstructions.isHidden = true
@@ -60,6 +66,9 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         collectionView.delegate = self
         collectionView.dataSource = self
         AllUnits = [DayUnits, WeekUnits, MonthUnits]
+        
+        DatePicker.addTarget(self, action: #selector(updateDate), for: .valueChanged)
+        tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissDatePicker))
         
         UNUserNotificationCenter.current().delegate = self
 
@@ -113,16 +122,22 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             cell.LabelWrapperConstraint.constant = 0
             cell.ImageLeftConstraint.isActive = true
             cell.ImageRightConstraint.isActive = false
-            
-            let lpGestureRecognizer: UILongPressGestureRecognizer = UILongPressGestureRecognizer(target: self, action: #selector(didLongPressCell))
-            lpGestureRecognizer.minimumPressDuration = 1.0
-            cell.contentView.addGestureRecognizer(lpGestureRecognizer)
+        
             cell.backgroundColor = UIColor(displayP3Red: 0.0, green: 0.0, blue: 150/255, alpha: 0.15)
             
-            if cell.contentView.gestureRecognizers == nil {
+            if (cell.contentView.gestureRecognizers?.count)! < 3 {
                 let pan = UIPanGestureRecognizer(target: self, action:#selector(removeTask))
                 pan.delegate = self
                 cell.contentView.addGestureRecognizer(pan)
+                
+                let lpGestureRecognizer: UILongPressGestureRecognizer = UILongPressGestureRecognizer(target: self, action: #selector(didLongPressCell))
+                lpGestureRecognizer.minimumPressDuration = 1.0
+                cell.contentView.addGestureRecognizer(lpGestureRecognizer)
+                
+                let swipeRightRecognizer: UIPinchGestureRecognizer = UIPinchGestureRecognizer(target: self, action: #selector(showDatePicker))
+                cell.contentView.addGestureRecognizer(swipeRightRecognizer)
+                
+                
             }
 
             if (item.reminderDate != nil) {
@@ -130,7 +145,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 
                 if cell.RecurringButton.gestureRecognizers == nil {
                     let recurPan = UILongPressGestureRecognizer(target: self, action:#selector(makeRecurring))
-                    recurPan.minimumPressDuration = 0.25
+                    recurPan.minimumPressDuration = 0.1
                     cell.RecurringButton.addGestureRecognizer(recurPan)
                 }
                 
@@ -143,7 +158,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             
             if cell.RemindButton.gestureRecognizers == nil {
                 let remindPan = UILongPressGestureRecognizer(target: self, action:#selector(setTime))
-                remindPan.minimumPressDuration = 0.25
+                remindPan.minimumPressDuration = 0.1
                 cell.RemindButton.addGestureRecognizer(remindPan)
             }
             
@@ -155,6 +170,35 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             return cell
         }
     }
+    
+    @objc func showDatePicker(recognizer: UIPinchGestureRecognizer) {
+        selectedCell = tableCellCheck(recognizer: recognizer)
+        selectedTableCell = tableView.cellForRow(at: IndexPath(item: selectedCell, section: 0)) as! TaskCell
+        DatePickerConstraint.constant = -250
+        self.view.addGestureRecognizer(tapGesture)
+
+        UIView.animate(withDuration: 0.2) {
+            self.view.layoutIfNeeded()
+        }
+    }
+    
+    @objc func dismissDatePicker(recognizer: UITapGestureRecognizer) {
+        let point = recognizer.location(in: view)
+        if !DatePicker.frame.contains(point) {
+            DatePickerConstraint.constant = 0
+            self.view.removeGestureRecognizer(tapGesture)
+            UIView.animate(withDuration: 0.2) {
+                self.view.layoutIfNeeded()
+            }
+        }
+    }
+    
+    @objc func updateDate() {
+        let item = Items.itemLists[selectedUnit].items[selectedCell]
+        item.reminderDate = DatePicker.date
+        tableView.reloadRows(at: [IndexPath(row: selectedCell, section: 0)], with: .none)
+    }
+    
     
     @objc func disableReminder(button: UIButton) {
         let cells = tableView.visibleCells
@@ -210,8 +254,8 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     }
     
     @objc func setTime(recognizer: UIPanGestureRecognizer) {
-        let widthIncrement = UIScreen.main.bounds.width / 7
-        let heightIncrement = UIScreen.main.bounds.height / 48
+        let widthIncrement = UIScreen.main.bounds.width / 6
+        let heightIncrement = UIScreen.main.bounds.height / 24
         
         currX = Int(floor(recognizer.location(in: view).x / widthIncrement))
         currY = Int(floor(recognizer.location(in: view).y / heightIncrement))
@@ -219,8 +263,6 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         
         switch recognizer.state {
         case .began:
-            precisionTimer = Timer.scheduledTimer(timeInterval: 0.5, target: self, selector: #selector(checkTimerHold), userInfo: nil, repeats: true)
-            
             components = gregorian.dateComponents([.year, .month, .day, .hour, .minute, .second], from: Date())
             selectedCell = tableCellCheck(recognizer: recognizer)
             selectedTableCell = tableView.cellForRow(at: IndexPath(item: selectedCell, section: 0)) as! TaskCell
@@ -234,18 +276,23 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             }
             let item = Items.itemLists[selectedUnit].items[selectedCell]
             let dateString = formatDate(wrappedDate: item.reminderDate) ?? ""
-            PanInstructions.text = "Drag To Set Time\nHold For Precision\n" + dateString
+            PanInstructions.text = "12 hours horizontal\n30 min vertical\n" + dateString
             tableView.alpha = 0.3
         case .changed:
-            prevIncrement = 0
+            components = gregorian.dateComponents([.year, .month, .day, .hour, .minute, .second], from: Date())
+            components.hour = components.hour! + (currX * 12) + (currY / 2)
+            components.minute = (currY % 2) * 30
+            components.second = 0
             let item = Items.itemLists[selectedUnit].items[selectedCell]
+            Items.itemLists[selectedUnit].items[selectedCell].reminderDate = gregorian.date(from: components)!
+            selectedTableCell.DateField.text = formatDate(wrappedDate: item.reminderDate)
+            tableView.reloadRows(at: [IndexPath(row: selectedCell, section:0)], with: .none)
+            
             let dateString = formatDate(wrappedDate: item.reminderDate) ?? ""
-            PanInstructions.text = "Drag To Set Time\nHold For Precision\n" + dateString
-            updateRemindTime()
+            PanInstructions.text = "8 hours horizontal\n15 min vertical\n" + dateString
         case .ended:
             tableView.alpha = 1
             PanInstructions.isHidden = true
-            precisionTimer.invalidate()
                 let item = Items.itemLists[selectedUnit].items[selectedCell]
                 selectedTableCell.DateField.text = formatDate(wrappedDate: item.reminderDate)
                 tableView.reloadRows(at: [IndexPath(row: selectedCell, section: 0)], with: .none)
@@ -282,29 +329,21 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     @objc func makeRecurring(recognizer: UIPanGestureRecognizer) {
         selectedCell = tableCellCheck(recognizer: recognizer)
         selectedTableCell = tableView.cellForRow(at: IndexPath(item: selectedCell, section: 0)) as! TaskCell
-        let widthIncrement = UIScreen.main.bounds.width / 10
+        
+        let widthIncrement = UIScreen.main.bounds.width / 3
+        let heightIncrement = UIScreen.main.bounds.height / 6
         
         currX = Int(floor(recognizer.location(in: view).x / widthIncrement))
+        currY = Int(floor(recognizer.location(in: view).y / heightIncrement))
+        let item = Items.itemLists[selectedUnit].items[selectedCell]
         
         switch recognizer.state {
         case .began:
-            Items.itemLists[selectedUnit].items[selectedCell].isRecurring = true
+            item.isRecurring = true
         case .changed:
-            if currX < 0 {
-                print("Error!  currX should not be less than 0!")
-            } else if currX == 0 {
-                Items.itemLists[selectedUnit].items[selectedCell].recurrenceUnit = 2
-                Items.itemLists[selectedUnit].items[selectedCell].recurrencePeriod = 1
-            } else if currX >= 1 && currX <= 3 {
-                Items.itemLists[selectedUnit].items[selectedCell].recurrenceUnit = 1
-                Items.itemLists[selectedUnit].items[selectedCell].recurrencePeriod = 4 - currX
-            } else if currX >= 4 && currX <= 9 {
-                Items.itemLists[selectedUnit].items[selectedCell].recurrenceUnit = 0
-                Items.itemLists[selectedUnit].items[selectedCell].recurrencePeriod = 10 - currX
-
-            } else {
-                print("Error!  currX should not be greater than 9!")
-            }
+            item.recurrenceUnit = 2 - currX
+            item.recurrencePeriod = currY + 1
+            
             PanInstructions.isHidden = false
             let halfHeight = UIScreen.main.bounds.height / 2
             if (recognizer.location(in: view).y < halfHeight) {
@@ -316,7 +355,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             if let recurString = formatRecurrence(item: item) {
                 selectedTableCell.DateField.text = "\(formatDate(wrappedDate: item.reminderDate)!), \(recurString)"
                 tableView.reloadRows(at: [IndexPath(row: selectedCell, section:0)], with: .none)
-                PanInstructions.text = "Drag To Set Recur Pattern\nHold For Precision\n\(recurString)"
+                PanInstructions.text = "Time Period Horizontal\nNumber Vertical\n\(recurString)"
                 tableView.alpha = 0.3
             }
         case .ended:
@@ -871,7 +910,11 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 return "Every \(period) Weeks"
             }
         } else if recur == 2 {
-            return "Monthly"
+            if period == 1 {
+                return "Monthly"
+            } else {
+                return "Every \(period) Months"
+            }
         } else {
             return nil
         }
@@ -880,29 +923,6 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void)
     {
         completionHandler([.alert, .badge, .sound])
-    }
-    
-    @objc func checkTimerHold() {
-        print("prevIncrement = \(prevIncrement)")
-        prevIncrement += 1
-        prevIncrement = prevIncrement % 6
-        updateRemindTime()
-    }
-    
-    func updateRemindTime() {
-        components = gregorian.dateComponents([.year, .month, .day, .hour, .minute, .second], from: Date())
-        components.day = components.day! + currX
-        components.hour = currY / 2
-        components.minute = (currY % 2) * 30 + (prevIncrement * 5)
-        components.second = 0
-        let item = Items.itemLists[selectedUnit].items[selectedCell]
-        Items.itemLists[selectedUnit].items[selectedCell].reminderDate = gregorian.date(from: components)!
-        selectedTableCell.DateField.text = formatDate(wrappedDate: item.reminderDate)
-        tableView.reloadRows(at: [IndexPath(row: selectedCell, section:0)], with: .none)
-        
-        let dateString = formatDate(wrappedDate: item.reminderDate) ?? ""
-        PanInstructions.text = "Drag To Set Time\nHold For Precision\n" + dateString
-        print("Running")
     }
     
     override var canBecomeFirstResponder: Bool {

@@ -269,6 +269,12 @@
                                 <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                 <nil key="highlightedColor"/>
                             </label>
+                            <datePicker contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" datePickerMode="dateAndTime" minuteInterval="1" translatesAutoresizingMaskIntoConstraints="NO" id="7PL-Dn-LE8">
+                                <rect key="frame" x="0.0" y="568" width="320" height="216"/>
+                                <date key="date" timeIntervalSinceReferenceDate="539983937.00408697">
+                                    <!--2018-02-10 19:32:17 +0000-->
+                                </date>
+                            </datePicker>
                         </subviews>
                         <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="calibratedRGB"/>
                         <constraints>
@@ -276,11 +282,14 @@
                             <constraint firstItem="Ei6-fm-ZJ0" firstAttribute="top" secondItem="L6x-cJ-ecA" secondAttribute="top" id="9hX-nc-lB0"/>
                             <constraint firstItem="L6x-cJ-ecA" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="10" id="BOr-fJ-AVH"/>
                             <constraint firstItem="L6x-cJ-ecA" firstAttribute="trailing" secondItem="6Tk-OE-BBY" secondAttribute="trailing" constant="-10" id="DuX-PE-n4p"/>
+                            <constraint firstItem="7PL-Dn-LE8" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" id="R6G-5A-t2L"/>
                             <constraint firstItem="b0v-XL-Ht0" firstAttribute="top" secondItem="Ei6-fm-ZJ0" secondAttribute="bottom" id="S5O-cd-jcj"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="Ei6-fm-ZJ0" secondAttribute="trailing" id="Set-qI-hAn"/>
                             <constraint firstItem="b0v-XL-Ht0" firstAttribute="trailing" secondItem="6Tk-OE-BBY" secondAttribute="trailing" id="SwO-k3-Csk"/>
                             <constraint firstItem="L6x-cJ-ecA" firstAttribute="top" secondItem="6Tk-OE-BBY" secondAttribute="top" id="YL8-dM-XAy"/>
+                            <constraint firstItem="7PL-Dn-LE8" firstAttribute="top" secondItem="b0v-XL-Ht0" secondAttribute="bottom" id="ZEZ-Mw-BoV"/>
                             <constraint firstItem="lpB-6s-O2K" firstAttribute="centerX" secondItem="8bC-Xf-vdC" secondAttribute="centerX" id="ZKt-aF-6eR"/>
+                            <constraint firstItem="7PL-Dn-LE8" firstAttribute="trailing" secondItem="6Tk-OE-BBY" secondAttribute="trailing" id="c19-oZ-CgN"/>
                             <constraint firstItem="lpB-6s-O2K" firstAttribute="centerY" secondItem="8bC-Xf-vdC" secondAttribute="centerY" id="iCu-4s-3qy"/>
                             <constraint firstItem="Ei6-fm-ZJ0" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" id="nzw-JB-vHQ"/>
                             <constraint firstItem="b0v-XL-Ht0" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" id="prz-4C-ekV"/>
@@ -290,6 +299,8 @@
                     <extendedEdge key="edgesForExtendedLayout" bottom="YES"/>
                     <navigationItem key="navigationItem" title="Daily Goals" id="KOe-dF-LaM" userLabel="Daily Goals"/>
                     <connections>
+                        <outlet property="DatePicker" destination="7PL-Dn-LE8" id="9kv-Xd-OFO"/>
+                        <outlet property="DatePickerConstraint" destination="ZEZ-Mw-BoV" id="Tt4-gt-RkW"/>
                         <outlet property="PanInstructions" destination="lpB-6s-O2K" id="ni7-dg-vwj"/>
                         <outlet property="PanInstructionsXPosition" destination="iCu-4s-3qy" id="mqn-DL-Qjb"/>
                         <outlet property="collectionView" destination="L6x-cJ-ecA" id="L36-tH-2OT"/>
