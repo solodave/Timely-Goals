@@ -26,14 +26,13 @@
                         <subviews>
                             <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="Ei6-fm-ZJ0" userLabel="Buffer">
                                 <rect key="frame" x="0.0" y="20" width="320" height="60"/>
-                                <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="60" id="8DE-wa-Ap5"/>
                                 </constraints>
                             </view>
                             <collectionView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" dataMode="prototypes" translatesAutoresizingMaskIntoConstraints="NO" id="L6x-cJ-ecA">
                                 <rect key="frame" x="10" y="20" width="300" height="40"/>
-                                <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="calibratedRGB"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="40" id="9zC-j1-LJZ"/>
                                 </constraints>
@@ -62,6 +61,7 @@
                                                 </textField>
                                             </subviews>
                                         </view>
+                                        <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                         <constraints>
                                             <constraint firstItem="uou-Fy-1hR" firstAttribute="leading" secondItem="CBx-eA-jDW" secondAttribute="leading" id="K6Q-UU-LXL"/>
                                             <constraint firstAttribute="bottom" secondItem="uou-Fy-1hR" secondAttribute="bottom" id="KTE-wm-VFi"/>
@@ -265,8 +265,8 @@
                                 </prototypes>
                             </tableView>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Drag To Set Time" textAlignment="center" lineBreakMode="wordWrap" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="lpB-6s-O2K" userLabel="Pan Instructions">
-                                <rect key="frame" x="36" y="264" width="248" height="41"/>
-                                <fontDescription key="fontDescription" type="system" pointSize="34"/>
+                                <rect key="frame" x="0.0" y="262.5" width="320" height="44"/>
+                                <fontDescription key="fontDescription" name="KannadaSangamMN" family="Kannada Sangam MN" pointSize="34"/>
                                 <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                 <nil key="highlightedColor"/>
                             </label>
@@ -277,12 +277,14 @@
                                 </date>
                             </datePicker>
                         </subviews>
-                        <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="calibratedRGB"/>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                         <constraints>
                             <constraint firstItem="b0v-XL-Ht0" firstAttribute="bottom" secondItem="6Tk-OE-BBY" secondAttribute="bottom" id="7P2-IG-fgY"/>
+                            <constraint firstItem="lpB-6s-O2K" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" id="7dm-e3-aqv"/>
                             <constraint firstItem="Ei6-fm-ZJ0" firstAttribute="top" secondItem="L6x-cJ-ecA" secondAttribute="top" id="9hX-nc-lB0"/>
                             <constraint firstItem="L6x-cJ-ecA" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="10" id="BOr-fJ-AVH"/>
                             <constraint firstItem="L6x-cJ-ecA" firstAttribute="trailing" secondItem="6Tk-OE-BBY" secondAttribute="trailing" constant="-10" id="DuX-PE-n4p"/>
+                            <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="lpB-6s-O2K" secondAttribute="trailing" id="Oya-Gf-wEw"/>
                             <constraint firstItem="7PL-Dn-LE8" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" id="R6G-5A-t2L"/>
                             <constraint firstItem="b0v-XL-Ht0" firstAttribute="top" secondItem="Ei6-fm-ZJ0" secondAttribute="bottom" id="S5O-cd-jcj"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="Ei6-fm-ZJ0" secondAttribute="trailing" id="Set-qI-hAn"/>

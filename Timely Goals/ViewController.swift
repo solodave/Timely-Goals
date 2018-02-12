@@ -14,10 +14,6 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     var isGrantedNotificationAccess:Bool = false
     
     var Items: ItemStore!
-    var AllUnits = [[String]]()
-    var DayUnits = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
-    var WeekUnits = ["Every Week", "Every 2nd Week", "Every 3rd Week", "Every 4th Week"]
-    var MonthUnits = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
     
     var selectedUnit = 0
     var selectedCell = 0
@@ -33,8 +29,6 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     var dragY: CGFloat = 0.0
     var currX: Int = 0
     var currY: Int = 0
-    var prevIncrement = 0
-    var precisionTimer = Timer()
     var gregorian = Calendar(identifier: .gregorian)
     var components = DateComponents()
     
@@ -43,7 +37,6 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     var panLocation: CGPoint? = nil
     var originalConstant: CGFloat? = nil
     
-    var blurEffectView: UIVisualEffectView!
     
     @IBOutlet var PanInstructions: UILabel!
     @IBOutlet var PanInstructionsXPosition: NSLayoutConstraint!
@@ -57,6 +50,8 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     @IBOutlet var DatePickerConstraint: NSLayoutConstraint!
     
     var tapGesture: UITapGestureRecognizer!
+    var dragTopConstraint = NSLayoutConstraint()
+    var dragLeadingConstraint = NSLayoutConstraint()
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -65,30 +60,22 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         tableView.dataSource = self
         collectionView.delegate = self
         collectionView.dataSource = self
-        AllUnits = [DayUnits, WeekUnits, MonthUnits]
         
         DatePicker.addTarget(self, action: #selector(updateDate), for: .valueChanged)
         tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissDatePicker))
         
         UNUserNotificationCenter.current().delegate = self
-
-        
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge], completionHandler: { (granted, error) in
             self.isGrantedNotificationAccess = granted
         })
-        
-        NotificationCenter.default.addObserver(self, selector: #selector(ViewController.keyboardWillShow), name: NSNotification.Name.UIKeyboardWillShow, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(ViewController.keyboardWillHide), name: NSNotification.Name.UIKeyboardWillHide, object: nil)
-
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         
         if (Items.itemLists.count > 0) {
             return Items.itemLists[selectedUnit].items.count + 1
-        } else {
-            return 0
         }
+        return 0
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -122,8 +109,6 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             cell.LabelWrapperConstraint.constant = 0
             cell.ImageLeftConstraint.isActive = true
             cell.ImageRightConstraint.isActive = false
-        
-            cell.backgroundColor = UIColor(displayP3Red: 0.0, green: 0.0, blue: 150/255, alpha: 0.15)
             
             if (cell.contentView.gestureRecognizers?.count)! < 3 {
                 let pan = UIPanGestureRecognizer(target: self, action:#selector(removeTask))
@@ -145,11 +130,10 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 
                 if cell.RecurringButton.gestureRecognizers == nil {
                     let recurPan = UILongPressGestureRecognizer(target: self, action:#selector(makeRecurring))
-                    recurPan.minimumPressDuration = 0.1
+                    recurPan.minimumPressDuration = 0.2
                     cell.RecurringButton.addGestureRecognizer(recurPan)
                 }
                 
-                cell.RecurringButton.layer.cornerRadius = 5
                 cell.RecurringButton.alpha = item.isRecurring ? 1.0 : 0.4
                 cell.RecurringButton.addTarget(self, action: #selector(disableRecurrence), for: .touchUpInside)
             } else {
@@ -158,14 +142,12 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             
             if cell.RemindButton.gestureRecognizers == nil {
                 let remindPan = UILongPressGestureRecognizer(target: self, action:#selector(setTime))
-                remindPan.minimumPressDuration = 0.1
+                remindPan.minimumPressDuration = 0.2
                 cell.RemindButton.addGestureRecognizer(remindPan)
             }
             
             cell.RemindButton.alpha = item.reminderDate != nil ? 1.0 : 0.4
-            cell.RemindButton.layer.cornerRadius = 5
             cell.RemindButton.addTarget(self, action: #selector(disableReminder), for: .touchUpInside)
-            
             
             return cell
         }
@@ -200,45 +182,40 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     }
     
     
-    @objc func disableReminder(button: UIButton) {
-        let cells = tableView.visibleCells
-        for i in 0...cells.count - 1 {
-            if cells[i].frame.contains(button.center) {
-                selectedTableCell = cells[i] as! TaskCell
+    func turnOffRecurrence(button: UIButton, noReminder: Bool) {
+        for i in 0...Items.itemLists[selectedUnit].items.count - 1 {
+            let tableCell = tableView.cellForRow(at: IndexPath(item: i, section: 0))
+            
+            let recframe = originConverter(targetView: (button))
+            let newframe = originConverter(targetView: tableCell!)
+            
+            if (recframe.intersects(newframe)) {
+                selectedTableCell = tableCell as! TaskCell
                 if let path = tableView.indexPath(for: selectedTableCell) {
                     selectedCell = path.row
                     let item = Items.itemLists[selectedUnit].items[selectedCell]
-                    item.reminderDate = nil
                     item.recurrenceUnit = -1
                     item.recurrencePeriod = 0
                     item.isRecurring = false
                     
+                    if (noReminder) {
+                        item.reminderDate = nil
+                    }
+                    
                     tableView.reloadRows(at: [path], with: .none)
-                    UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [String(Items.itemLists[selectedUnit].items[selectedCell].id)])
                     break
                 }
             }
         }
     }
     
+    @objc func disableReminder(button: UIButton) {
+        turnOffRecurrence(button: button, noReminder: true)
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [String(Items.itemLists[selectedUnit].items[selectedCell].id)])
+    }
+    
     @objc func disableRecurrence(button: UIButton) {
-        let cells = tableView.visibleCells
-        for i in 0...cells.count - 1 {
-            if cells[i].frame.contains(button.center) {
-                selectedTableCell = cells[i] as! TaskCell
-                if let path = tableView.indexPath(for: selectedTableCell) {
-                    selectedCell = path.row
-                    let item = Items.itemLists[selectedUnit].items[selectedCell]
-                    item.recurrenceUnit = -1
-                    item.recurrencePeriod = 0
-                    item.isRecurring = false
-                    
-                    tableView.reloadRows(at: [path], with: .none)
-                    UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [String(Items.itemLists[selectedUnit].items[selectedCell].id)])
-                    break
-                }
-            }
-        }
+        turnOffRecurrence(button: button, noReminder: false)
     }
     
     @objc func nameNewTask(button: UIButton) {
@@ -267,18 +244,26 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             selectedCell = tableCellCheck(recognizer: recognizer)
             selectedTableCell = tableView.cellForRow(at: IndexPath(item: selectedCell, section: 0)) as! TaskCell
             
-
             let item = Items.itemLists[selectedUnit].items[selectedCell]
             let dateString = formatDate(wrappedDate: item.reminderDate) ?? ""
             PanInstructions.text = "←12 hours→\n↑30 min↓\n" + dateString
-            tableView.alpha = 0.3
+            let halfHeight = UIScreen.main.bounds.height / 2
+            if (recognizer.location(in: view).y < halfHeight) {
+                PanInstructionsXPosition.constant = halfHeight - 100
+            } else {
+                PanInstructionsXPosition.constant = 150 - halfHeight
+            }
+            self.view.layoutIfNeeded()
+            UIView.animate(withDuration: 0.2) {
+                self.tableView.alpha = 0.15
+            }
         case .changed:
             components = gregorian.dateComponents([.year, .month, .day, .hour, .minute, .second], from: Date())
             components.hour = (currX * 12) + (currY / 2)
             components.minute = (currY % 2) * 30
             components.second = 0
             let item = Items.itemLists[selectedUnit].items[selectedCell]
-            Items.itemLists[selectedUnit].items[selectedCell].reminderDate = gregorian.date(from: components)!
+            item.reminderDate = gregorian.date(from: components)!
             selectedTableCell.DateField.text = formatDate(wrappedDate: item.reminderDate)
             tableView.reloadRows(at: [IndexPath(row: selectedCell, section:0)], with: .none)
             
@@ -289,22 +274,28 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             } else {
                 PanInstructionsXPosition.constant = 150 - halfHeight
             }
+            UIView.animate(withDuration: 0.25) {
+                self.view.layoutIfNeeded()
+            }
             let dateString = formatDate(wrappedDate: item.reminderDate) ?? ""
             PanInstructions.text = "←12 hours→\n↑30 min↓\n" + dateString
         case .ended:
-            tableView.alpha = 1
+            UIView.animate(withDuration: 0.2) {
+                self.tableView.alpha = 1
+            }
             PanInstructions.isHidden = true
-                let item = Items.itemLists[selectedUnit].items[selectedCell]
-                selectedTableCell.DateField.text = formatDate(wrappedDate: item.reminderDate)
-                tableView.reloadRows(at: [IndexPath(row: selectedCell, section: 0)], with: .none)
-                if isGrantedNotificationAccess{
-                    let seconds = item.reminderDate!.timeIntervalSince(Date())
-                    print(seconds)
+            let item = Items.itemLists[selectedUnit].items[selectedCell]
+            selectedTableCell.DateField.text = formatDate(wrappedDate: item.reminderDate)
+            tableView.reloadRows(at: [IndexPath(row: selectedCell, section: 0)], with: .none)
+            if isGrantedNotificationAccess{
+                if let date = item.reminderDate {
+                    let seconds = date.timeIntervalSince(Date())
                     if (seconds > 0) {
                         //add notification code here
                         let content = UNMutableNotificationContent()
                         content.body = selectedTableCell.TaskField.text!
                         content.categoryIdentifier = String(item.id)
+                        content.sound = UNNotificationSound(named: <#T##String#>)
                         
                         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: seconds, repeats: false)
                         let request = UNNotificationRequest(identifier: String(item.id), content: content, trigger: trigger)
@@ -316,7 +307,10 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                             }
                         })
                     }
+                } else {
+                    return
                 }
+            }
             view.setNeedsDisplay()
             view.layoutIfNeeded()
             view.setNeedsLayout()
@@ -328,8 +322,6 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     }
     
     @objc func makeRecurring(recognizer: UIPanGestureRecognizer) {
-        selectedCell = tableCellCheck(recognizer: recognizer)
-        selectedTableCell = tableView.cellForRow(at: IndexPath(item: selectedCell, section: 0)) as! TaskCell
         
         let widthIncrement = UIScreen.main.bounds.width / 3
         let heightIncrement = UIScreen.main.bounds.height / 6
@@ -341,6 +333,14 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         switch recognizer.state {
         case .began:
             item.isRecurring = true
+            setCells(recognizer: recognizer)
+            let halfHeight = UIScreen.main.bounds.height / 2
+            if (recognizer.location(in: view).y < halfHeight) {
+                PanInstructionsXPosition.constant = halfHeight - 100
+            } else {
+                PanInstructionsXPosition.constant = 150 - halfHeight
+            }
+            self.view.layoutIfNeeded()
         case .changed:
             item.recurrenceUnit = 2 - currX
             item.recurrencePeriod = currY + 1
@@ -352,15 +352,22 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             } else {
                 PanInstructionsXPosition.constant = 150 - halfHeight
             }
+            UIView.animate(withDuration: 0.25) {
+                self.view.layoutIfNeeded()
+            }
             let item = Items.itemLists[selectedUnit].items[selectedCell]
             if let recurString = formatRecurrence(item: item) {
                 selectedTableCell.DateField.text = "\(formatDate(wrappedDate: item.reminderDate)!), \(recurString)"
                 tableView.reloadRows(at: [IndexPath(row: selectedCell, section:0)], with: .none)
                 PanInstructions.text = "←Period→\n↑Frequency↓\n\(recurString)"
-                tableView.alpha = 0.3
+                UIView.animate(withDuration: 0.25) {
+                    self.tableView.alpha = 0.15
+                }
             }
         case .ended:
-            tableView.alpha = 1
+            UIView.animate(withDuration: 0.25) {
+                self.tableView.alpha = 1
+            }
             PanInstructions.isHidden = true
         default:
             break
@@ -375,8 +382,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         case .began:
             if (recognizer.view != nil) {
                 view.endEditing(true)
-                selectedCell = tableCellCheck(recognizer: recognizer)
-                selectedTableCell = tableView.cellForRow(at: IndexPath(item: selectedCell, section: 0)) as! TaskCell
+                setCells(recognizer: recognizer)
                 originalConstant = selectedTableCell.LabelWrapperConstraint.constant
                 selectedTableCell.Background.alpha = 0.5
                 panLocation = recognizer.location(in: view)
@@ -394,7 +400,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 
                 if (isPanAmountPositive) {
                     selectedTableCell.Background.backgroundColor = .red
-                    selectedTableCell.whiteMark.image = UIImage(named: "x")
+                    selectedTableCell.whiteMark.image = UIImage(named: "x2")
                 } else {
                     selectedTableCell.Background.backgroundColor = .green
                     selectedTableCell.whiteMark.image = UIImage(named: "checkmarkwhite")
@@ -469,44 +475,47 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             view.endEditing(true)
             if recognizer.view != nil  {
             
-                selectedCell = tableCellCheck(recognizer: recognizer)
-                let selectedTableCell = tableView.cellForRow(at: IndexPath(item: selectedCell, section: 0)) as! TaskCell
+                setCells(recognizer: recognizer)
                 let textFrame = originConverter(targetView: selectedTableCell.TaskField)
                 
                 let label = UILabel(frame: textFrame)
                 label.translatesAutoresizingMaskIntoConstraints = false
                 label.text = Items.itemLists[selectedUnit].items[selectedCell].label
-                label.font = UIFont(name: "Kannada Sangam MN", size: 14.0)
+                label.font = UIFont(name: "Kannada Sangam MN", size: 17.0)
                 dragLabel = label
-                dragX = Double((dragLabel?.center.x)! - 2.0)
-                dragY = (dragLabel?.center.y)! - recognizer.location(in:view).y
-                
                 view.addSubview(dragLabel!)
                 view.bringSubview(toFront: dragLabel!)
-
-                originalOrigin = selectedTableCell.TaskField.convert(CGPoint.zero, to: view)
+                dragTopConstraint = (dragLabel?.topAnchor.constraint(equalTo: selectedTableCell.TaskField.topAnchor))!
+                dragLeadingConstraint = (dragLabel?.leadingAnchor.constraint(equalTo: selectedTableCell.TaskField.leadingAnchor))!
+                dragTopConstraint.isActive = true
+                dragLeadingConstraint.isActive = true
                 
+                dragX = Double((dragLabel?.frame.origin.x)!)
+                dragY = (dragLabel?.center.y)! - recognizer.location(in:view).y
+
+                self.view.setNeedsDisplay()
+                originalOrigin = selectedTableCell.TaskField.convert(CGPoint.zero, to: view)
+                self.dragLabel?.center.y = recognizer.location(in: self.view).y
                 UIView.animate(withDuration: 0.3) {
-                    selectedTableCell.TaskField.center.y -= self.dragY
-                    selectedTableCell.RecurringButton.alpha = 0.0
-                    selectedTableCell.RemindButton.alpha = 0.0
+                    self.selectedTableCell.RecurringButton.alpha = 0.0
+                    self.selectedTableCell.RemindButton.alpha = 0.0
+                    self.selectedTableCell.DateField.alpha = 0.0
                 }
             }
         case .changed:
             let point = recognizer.location(in: view)
             let selectedTableCell = tableView.cellForRow(at: IndexPath(item: selectedCell, section: 0)) as! TaskCell
-
+            dragTopConstraint.isActive = false
+            dragLeadingConstraint.isActive = false
             if (!selectedTableCell.isHidden) {
                 selectedTableCell.isHidden = true
-                selectedTableCell.TaskField.center.y += self.dragY
-                self.dragLabel?.center.y = recognizer.location(in: self.view).y
-                self.dragLabel?.center.x = CGFloat(self.dragX)
+
             } else {
                 let tView = originConverter(targetView: tableView)
                 if tView.contains(point) {
-                    UIView.animate(withDuration: 0.1) {
+                   UIView.animate(withDuration: 0.1) {
                         self.dragLabel?.center.y = recognizer.location(in: self.view).y
-                        self.dragLabel?.center.x = CGFloat(self.dragX)
+                        self.dragLabel?.frame.origin.x = CGFloat(self.dragX)
                     }
                 } else {
                     UIView.animate(withDuration: 0.1) {
@@ -514,7 +523,6 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                     }
                 }
             }
-            
             var isIntersection = false
             for i in 0...Items.itemLists.count - 1 {
                 let point = tableCollectionIntersect(it: i)
@@ -524,9 +532,17 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                         let oldDropCell = dropCell
                         dropCell = i
                         if (oldDropCell != nil) {
-                            collectionView.reloadItems(at: [IndexPath(row: oldDropCell!, section: 0)])
+                           // collectionView.reloadItems(at: [IndexPath(row: oldDropCell!, section: 0)])
+                            let cell = collectionView.cellForItem(at: IndexPath(row: oldDropCell!, section: 0))!
+                            UIView.animate(withDuration: 0.3) {
+                                cell.backgroundColor = UIColor.clear
+                            }
                         }
-                        collectionView.reloadItems(at: [IndexPath(row: dropCell!, section: 0)])
+                        //collectionView.reloadItems(at: [IndexPath(row: dropCell!, section: 0)])
+                        let cell = collectionView.cellForItem(at: IndexPath(row: dropCell!, section: 0))!
+                        UIView.animate(withDuration: 0.3) {
+                            cell.backgroundColor = UIColor.red.withAlphaComponent(0.5)
+                        }
                     }
                     break
                 }
@@ -534,7 +550,11 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             if !isIntersection && dropCell != nil {
                 let oldDropCell = dropCell
                 dropCell = nil
-                collectionView.reloadItems(at: [IndexPath(row: oldDropCell!, section: 0)])
+                let cell = collectionView.cellForItem(at: IndexPath(row: oldDropCell!, section: 0))!
+                UIView.animate(withDuration: 0.3) {
+                    cell.backgroundColor = UIColor.clear
+                }
+                //collectionView.reloadItems(at: [IndexPath(row: oldDropCell!, section: 0)])
             }
             
             for i in 0...Items.itemLists[selectedUnit].items.count - 1 {
@@ -560,12 +580,14 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             }
         case .ended:
             if (dragLabel == nil) { return }
+            dragTopConstraint.isActive = false
+            dragLeadingConstraint.isActive = false
+            //selectedTableCell.TaskField.center.y += self.dragY
             let oldDropCell = dropCell
             dropCell = nil
             if let dCell = oldDropCell {
                 collectionView.reloadItems(at: [IndexPath(row: dCell, section: 0)])
             }
-            let selectedTableCell = tableView.cellForRow(at: IndexPath(row: selectedCell, section: 0)) as! TaskCell
             selectedTableCell.isHidden = false
             selectedTableCell.TaskField.isHidden = true
             
@@ -585,9 +607,10 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                     }, completion: { finished in
                         self.dragLabel?.removeFromSuperview()
                         self.dragLabel = nil
-                        selectedTableCell.TaskField.isHidden = false
-                        selectedTableCell.RecurringButton.alpha = 1.0
-                        selectedTableCell.RemindButton.alpha = 1.0
+                        self.selectedTableCell.TaskField.isHidden = false
+                        self.selectedTableCell.RecurringButton.alpha = 1.0
+                        self.selectedTableCell.RemindButton.alpha = 1.0
+                        self.selectedTableCell.DateField.alpha = 1.0
                     })
                     isIntersection = true
                     break
@@ -595,14 +618,16 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             }
             
             if (!isIntersection) {
+                let item = Items.itemLists[selectedUnit].items[selectedCell]
                 UIView.animate(withDuration: 0.3, animations: { () -> Void in
                     self.dragLabel?.frame.origin.y = self.originalOrigin.y
-                    selectedTableCell.RecurringButton.alpha = 1.0
-                    selectedTableCell.RemindButton.alpha = 1.0
+                    self.selectedTableCell.RecurringButton.alpha = item.isRecurring ? 1.0 : 0.4
+                    self.selectedTableCell.RemindButton.alpha = item.reminderDate != nil ? 1.0 : 0.4
+                    self.selectedTableCell.DateField.alpha = 1.0
                 }, completion: { finished in
                     self.dragLabel?.removeFromSuperview()
                     self.dragLabel = nil
-                    selectedTableCell.TaskField.isHidden = false
+                    self.selectedTableCell.TaskField.isHidden = false
                 })
             }
         default:
@@ -627,7 +652,10 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             menu.setTargetRect(targetRect, in: self.view)
             menu.setMenuVisible(true, animated: true)
         
-        
+        recognizer.isEnabled = false
+        recognizer.isEnabled = true
+        collectionView.reloadData()
+
 
     }
     @objc func renameList() {
@@ -637,15 +665,40 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     }
     
     @objc func deleteList() {
-        Items.itemLists.remove(at: selectedUnit)
-        collectionView.deleteItems(at: [IndexPath(item: selectedUnit, section:0)])
-        if (selectedUnit > 0) {
-            selectedUnit -= 1
-        } else {
-            selectedUnit = 0
+        let oldCell = self.collectionView.cellForItem(at: IndexPath(row: self.selectedUnit, section: 0)) as! ListCell
+        let label = oldCell.ListField.text!
+        let alertController = UIAlertController(title: "Delete List \(label)?", message: nil, preferredStyle: .actionSheet)
+        let okAction = UIAlertAction(title: "Yes", style: .destructive) {
+            (action) -> Void in
+            
+            self.Items.itemLists.remove(at: self.selectedUnit)
+            self.collectionView.deleteItems(at: [IndexPath(item: self.selectedUnit, section:0)])
+            if (self.selectedUnit > 0) {
+                self.selectedUnit -= 1
+            } else {
+                self.selectedUnit = 0
+            }
+            let cell = self.collectionView.cellForItem(at: IndexPath(row: self.selectedUnit, section: 0))!
+            cell.layer.borderWidth = 1.0
+            cell.layer.borderColor = UIColor.blue.cgColor
+            self.collectionView.reloadData()
+            self.tableView.reloadData()
+            
         }
-        collectionView.reloadData()
-        tableView.reloadData()
+        let cancelAction = UIAlertAction(title: "No", style: .cancel) {
+            (action) -> Void in
+        }
+        
+        alertController.addAction(okAction)
+        alertController.addAction(cancelAction)
+        
+        // On iPads the sourceView and sourceRect must be defined for the alert to appear.
+        /*if let popoverController = alertController.popoverPresentationController {
+         popoverController.sourceView = DeleteButton
+         popoverController.sourceRect = DeleteButton.bounds
+         }*/
+        
+        present(alertController, animated: true, completion: nil)
     }
 
 
@@ -698,7 +751,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             let lpGestureRecognizer: UILongPressGestureRecognizer = UILongPressGestureRecognizer(target: self, action: #selector(listOptions))
             lpGestureRecognizer.minimumPressDuration = 0.5
             cell.contentView.addGestureRecognizer(lpGestureRecognizer)
-            
+            cell.ListField.backgroundColor = UIColor.clear
             UIView.animate(withDuration: 0.3) {
                 cell.backgroundColor = UIColor.clear
             }
@@ -801,13 +854,15 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     
     func collectionCellCheck(recognizer: UIGestureRecognizer) -> Int {
         for i in 0...Items.itemLists.count - 1 {
-            let cell = collectionView.cellForItem(at: IndexPath(item: i, section: 0))
             
-            let recframe = originConverter(targetView: (recognizer.view)!)
-            let newframe = originConverter(targetView: cell!)
+            if let cell = collectionView.cellForItem(at: IndexPath(item: i, section: 0)) {
             
-            if (recframe.intersects(newframe)) {
-                return i
+                let recframe = originConverter(targetView: (recognizer.view)!)
+                let newframe = originConverter(targetView: cell)
+                
+                if (recframe.intersects(newframe)) {
+                    return i
+                }
             }
         }
         return -1
@@ -850,14 +905,17 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         if (it == selectedUnit || it == 4) {
             return CGPoint.zero
         }
-        let collectionCell = collectionView.cellForItem(at: IndexPath(item: it, section: 0))!
-        let neworigin = collectionCell.convert(CGPoint.zero, to: view)
-        var newframe = collectionCell.frame
-        newframe.origin = neworigin
-        if dragLabel!.frame.intersects(newframe) {
-            newframe.origin.x += newframe.width / 2
-            newframe.origin.y += newframe.height / 2
-            return newframe.origin
+        if let collectionCell = collectionView.cellForItem(at: IndexPath(item: it, section: 0)) {
+            let neworigin = collectionCell.convert(CGPoint.zero, to: view)
+            var newframe = collectionCell.frame
+            newframe.origin = neworigin
+            if dragLabel != nil && dragLabel!.frame.intersects(newframe) {
+                newframe.origin.x += newframe.width / 2
+                newframe.origin.y += newframe.height / 2
+                return newframe.origin
+            } else {
+                return CGPoint.zero
+            }
         } else {
             return CGPoint.zero
         }
@@ -935,15 +993,8 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         return true
     }
     
-    @objc func keyboardWillShow(notification: NSNotification) {
-        if let keyboardSize = (notification.userInfo?[UIKeyboardFrameBeginUserInfoKey] as? NSValue)?.cgRectValue {
-                tableBottom.constant = -keyboardSize.height
-                self.view.layoutIfNeeded()
-            }
-        }
-    
-    @objc func keyboardWillHide(notification: NSNotification) {
-        tableBottom.constant = 0
-        self.view.layoutIfNeeded()
+    func setCells(recognizer: UIGestureRecognizer) {
+        selectedCell = tableCellCheck(recognizer: recognizer)
+        selectedTableCell = tableView.cellForRow(at: IndexPath(item: selectedCell, section: 0)) as! TaskCell
     }
 }
