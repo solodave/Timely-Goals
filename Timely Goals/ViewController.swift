@@ -267,20 +267,14 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             selectedCell = tableCellCheck(recognizer: recognizer)
             selectedTableCell = tableView.cellForRow(at: IndexPath(item: selectedCell, section: 0)) as! TaskCell
             
-            PanInstructions.isHidden = false
-            let halfHeight = UIScreen.main.bounds.height / 2
-            if (recognizer.location(in: view).y < halfHeight) {
-                PanInstructionsXPosition.constant = halfHeight - 100
-            } else {
-                PanInstructionsXPosition.constant = 150 - halfHeight
-            }
+
             let item = Items.itemLists[selectedUnit].items[selectedCell]
             let dateString = formatDate(wrappedDate: item.reminderDate) ?? ""
-            PanInstructions.text = "12 hours horizontal\n30 min vertical\n" + dateString
+            PanInstructions.text = "←12 hours→\n↑30 min↓\n" + dateString
             tableView.alpha = 0.3
         case .changed:
             components = gregorian.dateComponents([.year, .month, .day, .hour, .minute, .second], from: Date())
-            components.hour = components.hour! + (currX * 12) + (currY / 2)
+            components.hour = (currX * 12) + (currY / 2)
             components.minute = (currY % 2) * 30
             components.second = 0
             let item = Items.itemLists[selectedUnit].items[selectedCell]
@@ -288,8 +282,15 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             selectedTableCell.DateField.text = formatDate(wrappedDate: item.reminderDate)
             tableView.reloadRows(at: [IndexPath(row: selectedCell, section:0)], with: .none)
             
+            PanInstructions.isHidden = false
+            let halfHeight = UIScreen.main.bounds.height / 2
+            if (recognizer.location(in: view).y < halfHeight) {
+                PanInstructionsXPosition.constant = halfHeight - 100
+            } else {
+                PanInstructionsXPosition.constant = 150 - halfHeight
+            }
             let dateString = formatDate(wrappedDate: item.reminderDate) ?? ""
-            PanInstructions.text = "8 hours horizontal\n15 min vertical\n" + dateString
+            PanInstructions.text = "←12 hours→\n↑30 min↓\n" + dateString
         case .ended:
             tableView.alpha = 1
             PanInstructions.isHidden = true
@@ -355,7 +356,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             if let recurString = formatRecurrence(item: item) {
                 selectedTableCell.DateField.text = "\(formatDate(wrappedDate: item.reminderDate)!), \(recurString)"
                 tableView.reloadRows(at: [IndexPath(row: selectedCell, section:0)], with: .none)
-                PanInstructions.text = "Time Period Horizontal\nNumber Vertical\n\(recurString)"
+                PanInstructions.text = "←Period→\n↑Frequency↓\n\(recurString)"
                 tableView.alpha = 0.3
             }
         case .ended:
@@ -866,13 +867,18 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         //Yesterday, today, tomorrow
         if let date = wrappedDate {
             let gregorian = Calendar(identifier: .gregorian)
-            let dateComponents = gregorian.dateComponents([.day], from: date)
-            let todayComponents = gregorian.dateComponents([.day], from: Date())
+            let dateComponents = gregorian.dateComponents([.year, .month, .day], from: date)
+            let todayComponents = gregorian.dateComponents([.year, .month, .day], from: Date())
             let day = dateComponents.day!
             let today = todayComponents.day!
             
             let dateFormatter = DateFormatter()
             dateFormatter.timeStyle = .short
+            
+            if (dateComponents.month! != todayComponents.month! || dateComponents.year! != todayComponents.year!) {
+                dateFormatter.dateStyle = .short
+                return dateFormatter.string(from: date)
+            }
 
             if today > day - 2 && today < day + 2 {
                 dateFormatter.dateStyle = .none
