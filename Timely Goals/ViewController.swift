@@ -63,11 +63,24 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         
         DatePicker.addTarget(self, action: #selector(updateDate), for: .valueChanged)
         tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissDatePicker))
+        tapGesture.cancelsTouchesInView = true
         
         UNUserNotificationCenter.current().delegate = self
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge], completionHandler: { (granted, error) in
             self.isGrantedNotificationAccess = granted
+            // Define Actions
+            let removeTask = UNNotificationAction(identifier: "removeTask", title: "Done!", options: [])
+            let remindOneHour = UNNotificationAction(identifier: "remindOneHour", title: "1 Hour Snooze", options: [])
+            
+            // Define Category
+            let category = UNNotificationCategory(identifier: "category", actions: [removeTask, remindOneHour], intentIdentifiers: [], options: [])
+            
+            // Register Category
+            UNUserNotificationCenter.current().setNotificationCategories([category])
         })
+        
+        NotificationCenter.default.addObserver(self, selector: #selector(ViewController.keyboardWillShow), name: NSNotification.Name.UIKeyboardWillShow, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(ViewController.keyboardWillHide), name: NSNotification.Name.UIKeyboardWillHide, object: nil)
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -116,7 +129,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 cell.contentView.addGestureRecognizer(pan)
                 
                 let lpGestureRecognizer: UILongPressGestureRecognizer = UILongPressGestureRecognizer(target: self, action: #selector(didLongPressCell))
-                lpGestureRecognizer.minimumPressDuration = 1.0
+                lpGestureRecognizer.minimumPressDuration = 0.5
                 cell.contentView.addGestureRecognizer(lpGestureRecognizer)
                 
                 let swipeRightRecognizer: UIPinchGestureRecognizer = UIPinchGestureRecognizer(target: self, action: #selector(showDatePicker))
@@ -130,7 +143,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 
                 if cell.RecurringButton.gestureRecognizers == nil {
                     let recurPan = UILongPressGestureRecognizer(target: self, action:#selector(makeRecurring))
-                    recurPan.minimumPressDuration = 0.2
+                    recurPan.minimumPressDuration = 0.15
                     cell.RecurringButton.addGestureRecognizer(recurPan)
                 }
                 
@@ -142,7 +155,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             
             if cell.RemindButton.gestureRecognizers == nil {
                 let remindPan = UILongPressGestureRecognizer(target: self, action:#selector(setTime))
-                remindPan.minimumPressDuration = 0.2
+                remindPan.minimumPressDuration = 0.15
                 cell.RemindButton.addGestureRecognizer(remindPan)
             }
             
@@ -157,9 +170,16 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         selectedCell = tableCellCheck(recognizer: recognizer)
         selectedTableCell = tableView.cellForRow(at: IndexPath(item: selectedCell, section: 0)) as! TaskCell
         DatePickerConstraint.constant = -250
+        tableView.scrollToRow(at: IndexPath(row: selectedCell, section: 0), at: .middle, animated: true)
+
+        let item = Items.itemLists[selectedUnit].items[selectedCell]
+        if let date = item.reminderDate {
+            DatePicker.date = date
+        }
         self.view.addGestureRecognizer(tapGesture)
 
         UIView.animate(withDuration: 0.2) {
+            self.tableView.alpha = 0.15
             self.view.layoutIfNeeded()
         }
     }
@@ -170,6 +190,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             DatePickerConstraint.constant = 0
             self.view.removeGestureRecognizer(tapGesture)
             UIView.animate(withDuration: 0.2) {
+                self.tableView.alpha = 1.0
                 self.view.layoutIfNeeded()
             }
         }
@@ -179,6 +200,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         let item = Items.itemLists[selectedUnit].items[selectedCell]
         item.reminderDate = DatePicker.date
         tableView.reloadRows(at: [IndexPath(row: selectedCell, section: 0)], with: .none)
+        createPushNotification(item: item)
     }
     
     
@@ -287,30 +309,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             let item = Items.itemLists[selectedUnit].items[selectedCell]
             selectedTableCell.DateField.text = formatDate(wrappedDate: item.reminderDate)
             tableView.reloadRows(at: [IndexPath(row: selectedCell, section: 0)], with: .none)
-            if isGrantedNotificationAccess{
-                if let date = item.reminderDate {
-                    let seconds = date.timeIntervalSince(Date())
-                    if (seconds > 0) {
-                        //add notification code here
-                        let content = UNMutableNotificationContent()
-                        content.body = selectedTableCell.TaskField.text!
-                        content.categoryIdentifier = String(item.id)
-                        content.sound = UNNotificationSound(named: <#T##String#>)
-                        
-                        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: seconds, repeats: false)
-                        let request = UNNotificationRequest(identifier: String(item.id), content: content, trigger: trigger)
-                        
-                        UNUserNotificationCenter.current().add(request, withCompletionHandler: nil)
-                        UNUserNotificationCenter.current().getPendingNotificationRequests(completionHandler: { requests in
-                            for request in requests {
-                                print("Request \(request.trigger)")
-                            }
-                        })
-                    }
-                } else {
-                    return
-                }
-            }
+            createPushNotification(item: item)
             view.setNeedsDisplay()
             view.layoutIfNeeded()
             view.setNeedsLayout()
@@ -369,6 +368,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 self.tableView.alpha = 1
             }
             PanInstructions.isHidden = true
+            UIApplication.shared.applicationIconBadgeNumber = overdueTasks()
         default:
             break
         }
@@ -424,7 +424,6 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                     if item.isRecurring && self.panAmount < panLeftMax {
                         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [String(item.id)])
                         UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: [String(item.id)])
-                        
                         var unit: Calendar.Component
                         if item.recurrenceUnit == 0 {
                             unit = .day
@@ -445,6 +444,9 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                     } else {
                         self.Items.itemLists[self.selectedUnit].items.remove(at: self.selectedCell)
                         self.tableView.deleteRows(at: [IndexPath(row: self.selectedCell, section: 0)], with: .automatic)
+                        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [String(item.id)])
+                        UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: [String(item.id)])
+                        UIApplication.shared.applicationIconBadgeNumber = self.overdueTasks()
                     }
                     
                     
@@ -586,7 +588,11 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             let oldDropCell = dropCell
             dropCell = nil
             if let dCell = oldDropCell {
-                collectionView.reloadItems(at: [IndexPath(row: dCell, section: 0)])
+                //collectionView.reloadItems(at: [IndexPath(row: dCell, section: 0)])
+                let cell = collectionView.cellForItem(at: IndexPath(row: dCell, section: 0))!
+                UIView.animate(withDuration: 0.3) {
+                    cell.backgroundColor = UIColor.clear
+                }
             }
             selectedTableCell.isHidden = false
             selectedTableCell.TaskField.isHidden = true
@@ -824,7 +830,13 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                     tableView.insertRows(at: [IndexPath(row: selectedCell, section: 0)], with: .none)
                     textField.text = nil
                 } else {
-                    Items.itemLists[selectedUnit].items[selectedCell].label = text
+                    let item = Items.itemLists[selectedUnit].items[selectedCell]
+                    item.label = text
+                    if (item.reminderDate != nil) {
+                        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [String(item.id)])
+                        createPushNotification(item: item)
+                    }
+                    
                 }
             } else if !isCreationCell {
                 Items.itemLists[selectedUnit].items.remove(at: selectedCell)
@@ -996,5 +1008,92 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     func setCells(recognizer: UIGestureRecognizer) {
         selectedCell = tableCellCheck(recognizer: recognizer)
         selectedTableCell = tableView.cellForRow(at: IndexPath(item: selectedCell, section: 0)) as! TaskCell
+    }
+    func createPushNotification(item: Item) {
+        if isGrantedNotificationAccess{
+            UIApplication.shared.applicationIconBadgeNumber = overdueTasks()
+            if let date = item.reminderDate {
+                let seconds = date.timeIntervalSince(Date())
+                if (seconds > 0) {
+                    //add notification code here
+                    let content = UNMutableNotificationContent()
+                    content.body = selectedTableCell.TaskField.text!
+                    content.categoryIdentifier = "category"
+                    content.sound = UNNotificationSound(named: "silence")
+                    UIApplication.shared.applicationIconBadgeNumber = overdueTasks()
+
+                    let trigger = UNTimeIntervalNotificationTrigger(timeInterval: seconds, repeats: false)
+                    let request = UNNotificationRequest(identifier: String(item.id), content: content, trigger: trigger)
+                    
+                    UNUserNotificationCenter.current().add(request, withCompletionHandler: nil)
+                    UNUserNotificationCenter.current().getPendingNotificationRequests(completionHandler: { requests in
+                        for request in requests {
+                            print("Request \(request.trigger)")
+                        }
+                    })
+                }
+            } else {
+                return
+            }
+        }
+    }
+    
+    func overdueTasks() -> Int {
+        var overdueTasks : Int = 0
+        for list in Items.itemLists {
+            for item in list.items {
+                let date = Date()
+                if item.reminderDate != nil && item.reminderDate! < date {
+                    overdueTasks += 1
+                }
+            }
+        }
+        return overdueTasks
+    }
+    
+    func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
+        for list in Items.itemLists {
+            for item in list.items {
+                if item.id == Int(response.notification.request.identifier) {
+                    switch response.actionIdentifier {
+                    case "removeTask":
+                        if (item.isRecurring) {
+                            var unit: Calendar.Component
+                            if item.recurrenceUnit == 0 {
+                                unit = .day
+                            } else if item.recurrenceUnit == 1 {
+                                unit = .weekOfYear
+                            } else {
+                                unit = .month
+                            }
+                            item.reminderDate = Calendar.current.date(byAdding: unit, value: item.recurrencePeriod, to: item.reminderDate!)
+                        } else {
+                            self.Items.itemLists[self.selectedUnit].items.remove(at: self.selectedCell)
+                            UIApplication.shared.applicationIconBadgeNumber = self.overdueTasks()
+                        }
+                    case "remindOneHour":
+                        if let date = item.reminderDate {
+                            item.reminderDate = date.addingTimeInterval(3600)
+                            createPushNotification(item: item)
+                        }
+                    default:
+                        print("Error")
+                    }
+                }
+            }
+        }
+        completionHandler()
+    }
+    
+    @objc func keyboardWillShow(notification: NSNotification) {
+         if let keyboardSize = (notification.userInfo?[UIKeyboardFrameBeginUserInfoKey] as? NSValue)?.cgRectValue {
+            tableBottom.constant = -keyboardSize.height
+                self.view.layoutIfNeeded()
+        }
+    }
+    
+    @objc func keyboardWillHide(notification: NSNotification) {
+        tableBottom.constant = 0
+            self.view.layoutIfNeeded()
     }
 }

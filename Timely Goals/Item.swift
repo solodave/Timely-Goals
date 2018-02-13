@@ -15,8 +15,6 @@ class Item: NSObject, NSCoding {
     var isRecurring = false
     var recurrencePeriod = 0
     var recurrenceUnit = -1
-    var daysOfWeek: [Int] = []
-    var daysOfMonth: [Int] = []
     
     var id : Int = hash()
 
@@ -32,8 +30,6 @@ class Item: NSObject, NSCoding {
         aCoder.encode(isRecurring, forKey: "isRecurring")
         aCoder.encode(recurrencePeriod, forKey: "recurrencePeriod")
         aCoder.encode(recurrenceUnit, forKey: "recurrenceUnit")
-        aCoder.encode(daysOfWeek, forKey: "daysOfWeek")
-        aCoder.encode(daysOfMonth, forKey: "daysOfMonth")
 
     }
     
@@ -44,8 +40,6 @@ class Item: NSObject, NSCoding {
         isRecurring = aDecoder.decodeBool(forKey: "isRecurring")
         recurrencePeriod = aDecoder.decodeInteger(forKey: "recurrencePeriod")
         recurrenceUnit = aDecoder.decodeInteger(forKey: "recurrenceUnit")
-        daysOfWeek = aDecoder.decodeObject(forKey: "daysOfWeek") as! [Int]
-        daysOfMonth = aDecoder.decodeObject(forKey: "daysOfMonth") as! [Int]
 
         super.init()
     }
