@@ -19,6 +19,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
+        UIApplication.shared.setMinimumBackgroundFetchInterval(UIApplicationBackgroundFetchIntervalMinimum)
         
         let viewController = window!.rootViewController as! ViewController
         viewController.Items = itemStore
@@ -67,6 +68,15 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         self.saveContext()
     }
 
+    func application(_ application: UIApplication, performFetchWithCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void) {
+        if let viewController = window!.rootViewController as? ViewController
+        {
+            print("Background task executing")
+            UIApplication.shared.applicationIconBadgeNumber = viewController.overdueTasks()
+        }
+        completionHandler(.newData)
+    }
+    
     // MARK: - Core Data stack
 
     lazy var persistentContainer: NSPersistentContainer = {

@@ -167,20 +167,22 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     }
     
     @objc func showDatePicker(recognizer: UIPinchGestureRecognizer) {
-        selectedCell = tableCellCheck(recognizer: recognizer)
-        selectedTableCell = tableView.cellForRow(at: IndexPath(item: selectedCell, section: 0)) as! TaskCell
-        DatePickerConstraint.constant = -250
-        tableView.scrollToRow(at: IndexPath(row: selectedCell, section: 0), at: .middle, animated: true)
+        if (!editingTextField) {
+            selectedCell = tableCellCheck(recognizer: recognizer)
+            selectedTableCell = tableView.cellForRow(at: IndexPath(item: selectedCell, section: 0)) as! TaskCell
+            DatePickerConstraint.constant = -250
+            tableView.scrollToRow(at: IndexPath(row: selectedCell, section: 0), at: .middle, animated: true)
 
-        let item = Items.itemLists[selectedUnit].items[selectedCell]
-        if let date = item.reminderDate {
-            DatePicker.date = date
-        }
-        self.view.addGestureRecognizer(tapGesture)
+            let item = Items.itemLists[selectedUnit].items[selectedCell]
+            if let date = item.reminderDate {
+                DatePicker.date = date
+            }
+            self.view.addGestureRecognizer(tapGesture)
 
-        UIView.animate(withDuration: 0.2) {
-            self.tableView.alpha = 0.15
-            self.view.layoutIfNeeded()
+            UIView.animate(withDuration: 0.2) {
+                self.tableView.alpha = 0.15
+                self.view.layoutIfNeeded()
+            }
         }
     }
     
@@ -241,14 +243,16 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     }
     
     @objc func nameNewTask(button: UIButton) {
-        selectedCell = tableView.numberOfRows(inSection: 0) - 1
-        tempCell = selectedCell
-        let path = IndexPath(row: selectedCell, section: 0)
-        let cell = tableView.cellForRow(at: path) as! AddCell
-        isCreationCell = true
-        if let field = cell.TaskField {
-            field.isEnabled = true
-            field.becomeFirstResponder()
+        if (!editingTextField) {
+            selectedCell = tableView.numberOfRows(inSection: 0) - 1
+            tempCell = selectedCell
+            let path = IndexPath(row: selectedCell, section: 0)
+            let cell = tableView.cellForRow(at: path) as! AddCell
+            isCreationCell = true
+            if let field = cell.TaskField {
+                field.isEnabled = true
+                field.becomeFirstResponder()
+            }
         }
     }
     
@@ -433,6 +437,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                             unit = .month
                         }
                         item.reminderDate = Calendar.current.date(byAdding: unit, value: item.recurrencePeriod, to: item.reminderDate!)
+                        self.createPushNotification(item: item)
                         self.selectedTableCell.LabelWrapperConstraint.constant = -edge
                         self.view.layoutIfNeeded()
                         self.selectedTableCell.LabelWrapperConstraint.constant = 0
@@ -717,11 +722,13 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         let rows = tableView.numberOfRows(inSection: 0)
         
         if (indexPath.row == rows - 1) {
-            let cell = tableView.cellForRow(at: indexPath) as! AddCell
-            isCreationCell = true
-            if let field = cell.TaskField {
-                field.isEnabled = true
-                field.becomeFirstResponder()
+            if (!editingTextField) {
+                let cell = tableView.cellForRow(at: indexPath) as! AddCell
+                isCreationCell = true
+                if let field = cell.TaskField {
+                    field.isEnabled = true
+                    field.becomeFirstResponder()
+                }
             }
         } else {
             let cell = tableView.cellForRow(at: indexPath) as! TaskCell
@@ -998,6 +1005,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     
     func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void)
     {
+        UIApplication.shared.applicationIconBadgeNumber = overdueTasks()
         completionHandler([.alert, .badge, .sound])
     }
     
@@ -1017,7 +1025,11 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 if (seconds > 0) {
                     //add notification code here
                     let content = UNMutableNotificationContent()
-                    content.body = selectedTableCell.TaskField.text!
+                    if let field = selectedTableCell.TaskField, let text = field.text {
+                        content.body = text
+                    } else {
+                        return
+                    }
                     content.categoryIdentifier = "category"
                     content.sound = UNNotificationSound(named: "silence")
                     UIApplication.shared.applicationIconBadgeNumber = overdueTasks()
@@ -1028,7 +1040,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                     UNUserNotificationCenter.current().add(request, withCompletionHandler: nil)
                     UNUserNotificationCenter.current().getPendingNotificationRequests(completionHandler: { requests in
                         for request in requests {
-                            print("Request \(request.trigger)")
+                            print("Request \(request.trigger!) for id \(request.identifier)")
                         }
                     })
                 }
@@ -1054,7 +1066,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
         for list in Items.itemLists {
             for item in list.items {
-                if item.id == Int(response.notification.request.identifier) {
+                if item.id == response.notification.request.identifier {
                     switch response.actionIdentifier {
                     case "removeTask":
                         if (item.isRecurring) {
@@ -1084,6 +1096,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         }
         completionHandler()
     }
+
     
     @objc func keyboardWillShow(notification: NSNotification) {
          if let keyboardSize = (notification.userInfo?[UIKeyboardFrameBeginUserInfoKey] as? NSValue)?.cgRectValue {

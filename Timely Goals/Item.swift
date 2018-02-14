@@ -16,11 +16,12 @@ class Item: NSObject, NSCoding {
     var recurrencePeriod = 0
     var recurrenceUnit = -1
     
-    var id : Int = hash()
+    var id : String = UUID().uuidString
 
     
     init(label: String) {
         self.label = label
+        print("New item!  Hash = \(id)")
     }
     
     func encode(with aCoder: NSCoder) {
@@ -36,7 +37,7 @@ class Item: NSObject, NSCoding {
     required init(coder aDecoder: NSCoder) {
         label = aDecoder.decodeObject(forKey: "label") as! String
         reminderDate = aDecoder.decodeObject(forKey: "reminderDate") as? Date
-        id = aDecoder.decodeInteger(forKey: "id")
+        id = aDecoder.decodeObject(forKey: "id") as! String
         isRecurring = aDecoder.decodeBool(forKey: "isRecurring")
         recurrencePeriod = aDecoder.decodeInteger(forKey: "recurrencePeriod")
         recurrenceUnit = aDecoder.decodeInteger(forKey: "recurrenceUnit")
