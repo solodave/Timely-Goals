@@ -58,12 +58,38 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         PanInstructions.isHidden = true
         tableView.delegate = self
         tableView.dataSource = self
+        tableView.rowHeight = 60
         collectionView.delegate = self
         collectionView.dataSource = self
         
         DatePicker.addTarget(self, action: #selector(updateDate), for: .valueChanged)
         tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissDatePicker))
         tapGesture.cancelsTouchesInView = true
+        
+        let hasSeenTutorial = UserDefaults.standard.bool(forKey: "hasSeenTutorial")
+        if (!hasSeenTutorial && Items.itemLists.count == 0) {
+            Items.itemLists.append(ItemList(label: "Tutorial"))
+            Items.itemLists[0].items.append(Item(label: "← Push clock and pan to set reminder time"))
+            
+            let item1 = Item(label: "Push arrows to set recurrence period →")
+            item1.reminderDate = Date(timeIntervalSinceNow: 86400)
+            Items.itemLists[0].items.append(item1)
+            Items.itemLists[0].items.append(Item(label: "Hold task and drag to change position"))
+            Items.itemLists[0].items.append(Item(label: "You can drag and drop task into other list"))
+            Items.itemLists[0].items.append(Item(label: "Swipe right to delete"))
+                
+            let item2 = Item(label: "Swipe left to delete instance of recurring task")
+            item2.reminderDate = Date(timeIntervalSinceNow: 86400)
+            item2.isRecurring = true
+            item2.recurrencePeriod = 1
+            item2.recurrenceUnit = 0
+            Items.itemLists[0].items.append(item2)
+            Items.itemLists[0].items.append(Item(label: "Pinch task to set precise time"))
+            Items.itemLists[0].items.append(Item(label: "Hold list name to rename or delete"))
+            Items.itemLists.append(ItemList(label: "Other List"))
+            UserDefaults.standard.set(true, forKey: "hasSeenTutorial")
+        }
+
         
         UNUserNotificationCenter.current().delegate = self
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge], completionHandler: { (granted, error) in
@@ -176,6 +202,8 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             let item = Items.itemLists[selectedUnit].items[selectedCell]
             if let date = item.reminderDate {
                 DatePicker.date = date
+            } else {
+                DatePicker.date = Date()
             }
             self.view.addGestureRecognizer(tapGesture)
 
@@ -1019,6 +1047,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     }
     func createPushNotification(item: Item) {
         if isGrantedNotificationAccess{
+            UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [item.id])
             UIApplication.shared.applicationIconBadgeNumber = overdueTasks()
             if let date = item.reminderDate {
                 let seconds = date.timeIntervalSince(Date())
@@ -1032,12 +1061,12 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                     }
                     content.categoryIdentifier = "category"
                     content.sound = UNNotificationSound(named: "silence")
-                    UIApplication.shared.applicationIconBadgeNumber = overdueTasks()
 
                     let trigger = UNTimeIntervalNotificationTrigger(timeInterval: seconds, repeats: false)
                     let request = UNNotificationRequest(identifier: String(item.id), content: content, trigger: trigger)
                     
                     UNUserNotificationCenter.current().add(request, withCompletionHandler: nil)
+                    UIApplication.shared.applicationIconBadgeNumber = overdueTasks()
                     UNUserNotificationCenter.current().getPendingNotificationRequests(completionHandler: { requests in
                         for request in requests {
                             print("Request \(request.trigger!) for id \(request.identifier)")

@@ -40,6 +40,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         let success = itemStore.saveChanges()
         if (success) {
             print("Saved all of the Items")
+            let viewController = window!.rootViewController as! ViewController
+            UIApplication.shared.applicationIconBadgeNumber = viewController.overdueTasks()
         }
         else {
             print("Could not save any of the Items")
@@ -56,7 +58,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func applicationDidBecomeActive(_ application: UIApplication) {
         // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
         let viewController = window!.rootViewController as! ViewController
-        
+        UIApplication.shared.applicationIconBadgeNumber = viewController.overdueTasks()
+
         if (viewController.tableView != nil) {
             viewController.tableView.reloadData()
         }
