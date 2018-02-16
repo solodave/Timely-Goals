@@ -63,6 +63,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         collectionView.dataSource = self
         
         DatePicker.addTarget(self, action: #selector(updateDate), for: .valueChanged)
+        DatePicker.isHidden = true
         tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissDatePicker))
         tapGesture.cancelsTouchesInView = true
         
@@ -194,6 +195,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     
     @objc func showDatePicker(recognizer: UIPinchGestureRecognizer) {
         if (!editingTextField) {
+            DatePicker.isHidden = false
             selectedCell = tableCellCheck(recognizer: recognizer)
             selectedTableCell = tableView.cellForRow(at: IndexPath(item: selectedCell, section: 0)) as! TaskCell
             DatePickerConstraint.constant = -250
@@ -217,6 +219,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     @objc func dismissDatePicker(recognizer: UITapGestureRecognizer) {
         let point = recognizer.location(in: view)
         if !DatePicker.frame.contains(point) {
+            DatePicker.isHidden = true
             DatePickerConstraint.constant = 0
             self.view.removeGestureRecognizer(tapGesture)
             UIView.animate(withDuration: 0.2) {
@@ -677,7 +680,6 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     @objc func listOptions (recognizer: UILongPressGestureRecognizer) {
         selectedUnit = collectionCellCheck(recognizer: recognizer)
         let cell = collectionView.cellForItem(at: IndexPath(item: selectedUnit, section:0)) as! ListCell
-        
         let menu = UIMenuController.shared
         
             becomeFirstResponder()
@@ -732,10 +734,10 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         alertController.addAction(cancelAction)
         
         // On iPads the sourceView and sourceRect must be defined for the alert to appear.
-        /*if let popoverController = alertController.popoverPresentationController {
-         popoverController.sourceView = DeleteButton
-         popoverController.sourceRect = DeleteButton.bounds
-         }*/
+        if let popoverController = alertController.popoverPresentationController {
+         popoverController.sourceView = self.view
+         popoverController.sourceRect = oldCell.frame
+         }
         
         present(alertController, animated: true, completion: nil)
     }

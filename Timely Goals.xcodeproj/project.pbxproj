@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		AD26D2ED2019182900482626 /* ItemStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD26D2EC2019182900482626 /* ItemStore.swift */; };
+		AD705065203733BC0031DE5B /* SupportViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD705064203733BC0031DE5B /* SupportViewController.swift */; };
 		AD8168C91FFD7810002EBC59 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD8168C81FFD7810002EBC59 /* AppDelegate.swift */; };
 		AD8168CB1FFD7810002EBC59 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD8168CA1FFD7810002EBC59 /* ViewController.swift */; };
 		AD8168CE1FFD7810002EBC59 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AD8168CC1FFD7810002EBC59 /* Main.storyboard */; };
@@ -40,6 +41,7 @@
 
 /* Begin PBXFileReference section */
 		AD26D2EC2019182900482626 /* ItemStore.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ItemStore.swift; sourceTree = "<group>"; };
+		AD705064203733BC0031DE5B /* SupportViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupportViewController.swift; sourceTree = "<group>"; };
 		AD8168C51FFD7810002EBC59 /* Timely Goals.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Timely Goals.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		AD8168C81FFD7810002EBC59 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		AD8168CA1FFD7810002EBC59 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
@@ -120,6 +122,7 @@
 				AD26D2EC2019182900482626 /* ItemStore.swift */,
 				ADFAA8CC1FFEA7C7009B02B0 /* Model.xcdatamodeld */,
 				ADE8FD7E202E112000CD7DAD /* ItemList.swift */,
+				AD705064203733BC0031DE5B /* SupportViewController.swift */,
 			);
 			path = "Timely Goals";
 			sourceTree = "<group>";
@@ -286,6 +289,7 @@
 			files = (
 				ADFAA8C31FFEA503009B02B0 /* Item.swift in Sources */,
 				AD8168FA1FFD7EE4002EBC59 /* Cells.swift in Sources */,
+				AD705065203733BC0031DE5B /* SupportViewController.swift in Sources */,
 				AD26D2ED2019182900482626 /* ItemStore.swift in Sources */,
 				ADE8FD7F202E112000CD7DAD /* ItemList.swift in Sources */,
 				ADFAA8CE1FFEA7C7009B02B0 /* Model.xcdatamodeld in Sources */,

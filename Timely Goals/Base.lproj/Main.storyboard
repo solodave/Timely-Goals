@@ -13,6 +13,7 @@
     <customFonts key="customFonts">
         <array key="KannadaSangamMN.ttc">
             <string>KannadaSangamMN</string>
+            <string>KannadaSangamMN-Bold</string>
         </array>
     </customFonts>
     <scenes>
@@ -25,13 +26,13 @@
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="Ei6-fm-ZJ0" userLabel="Buffer">
-                                <rect key="frame" x="0.0" y="20" width="320" height="60"/>
+                                <rect key="frame" x="0.0" y="20" width="320" height="70"/>
                                 <constraints>
-                                    <constraint firstAttribute="height" constant="60" id="8DE-wa-Ap5"/>
+                                    <constraint firstAttribute="height" constant="70" id="8DE-wa-Ap5"/>
                                 </constraints>
                             </view>
                             <collectionView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" dataMode="prototypes" translatesAutoresizingMaskIntoConstraints="NO" id="L6x-cJ-ecA">
-                                <rect key="frame" x="10" y="20" width="300" height="40"/>
+                                <rect key="frame" x="60" y="20" width="250" height="40"/>
                                 <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="calibratedRGB"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="40" id="9zC-j1-LJZ"/>
@@ -104,7 +105,7 @@
                                 </cells>
                             </collectionView>
                             <tableView clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" delaysContentTouches="NO" dataMode="prototypes" style="plain" separatorStyle="default" rowHeight="-1" estimatedRowHeight="-1" sectionHeaderHeight="28" sectionFooterHeight="28" translatesAutoresizingMaskIntoConstraints="NO" id="b0v-XL-Ht0">
-                                <rect key="frame" x="0.0" y="80" width="320" height="488"/>
+                                <rect key="frame" x="0.0" y="90" width="320" height="478"/>
                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <prototypes>
                                     <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="none" indentationWidth="10" reuseIdentifier="TaskCell" rowHeight="44" id="1Xo-Pg-TOO" customClass="TaskCell" customModule="Timely_Goals" customModuleProvider="target">
@@ -269,7 +270,7 @@
                                 </prototypes>
                             </tableView>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Drag To Set Time" textAlignment="center" lineBreakMode="wordWrap" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="lpB-6s-O2K" userLabel="Pan Instructions">
-                                <rect key="frame" x="0.0" y="262.5" width="320" height="44"/>
+                                <rect key="frame" x="0.0" y="262" width="320" height="44"/>
                                 <fontDescription key="fontDescription" name="KannadaSangamMN" family="Kannada Sangam MN" pointSize="34"/>
                                 <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                 <nil key="highlightedColor"/>
@@ -280,15 +281,27 @@
                                     <!--2018-02-10 19:32:17 +0000-->
                                 </date>
                             </datePicker>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Gsz-58-tBV">
+                                <rect key="frame" x="20" y="20" width="30" height="45"/>
+                                <fontDescription key="fontDescription" name="KannadaSangamMN-Bold" family="Kannada Sangam MN" pointSize="25"/>
+                                <state key="normal" title="?">
+                                    <color key="titleColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                                </state>
+                                <connections>
+                                    <segue destination="xaU-kE-IpR" kind="presentation" id="yaY-0o-3lA"/>
+                                </connections>
+                            </button>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                         <constraints>
                             <constraint firstItem="b0v-XL-Ht0" firstAttribute="bottom" secondItem="6Tk-OE-BBY" secondAttribute="bottom" id="7P2-IG-fgY"/>
                             <constraint firstItem="lpB-6s-O2K" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" id="7dm-e3-aqv"/>
                             <constraint firstItem="Ei6-fm-ZJ0" firstAttribute="top" secondItem="L6x-cJ-ecA" secondAttribute="top" id="9hX-nc-lB0"/>
-                            <constraint firstItem="L6x-cJ-ecA" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="10" id="BOr-fJ-AVH"/>
+                            <constraint firstItem="L6x-cJ-ecA" firstAttribute="leading" secondItem="Gsz-58-tBV" secondAttribute="trailing" constant="10" id="BOr-fJ-AVH"/>
                             <constraint firstItem="L6x-cJ-ecA" firstAttribute="trailing" secondItem="6Tk-OE-BBY" secondAttribute="trailing" constant="-10" id="DuX-PE-n4p"/>
+                            <constraint firstItem="Gsz-58-tBV" firstAttribute="top" secondItem="6Tk-OE-BBY" secondAttribute="top" id="Id7-a4-9Ia"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="lpB-6s-O2K" secondAttribute="trailing" id="Oya-Gf-wEw"/>
+                            <constraint firstItem="Gsz-58-tBV" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" constant="20" symbolic="YES" id="PAj-Kw-VB8"/>
                             <constraint firstItem="7PL-Dn-LE8" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" id="R6G-5A-t2L"/>
                             <constraint firstItem="b0v-XL-Ht0" firstAttribute="top" secondItem="Ei6-fm-ZJ0" secondAttribute="bottom" id="S5O-cd-jcj"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="Ei6-fm-ZJ0" secondAttribute="trailing" id="Set-qI-hAn"/>
@@ -318,6 +331,70 @@
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="-1260" y="341.19718309859155"/>
+        </scene>
+        <!--Support View Controller-->
+        <scene sceneID="IQL-AB-v2U">
+            <objects>
+                <viewController id="xaU-kE-IpR" customClass="SupportViewController" customModule="Timely_Goals" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="mib-QP-MBu">
+                        <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" textAlignment="natural" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="sAS-vT-u2w">
+                                <rect key="frame" x="20" y="94" width="280" height="372.5"/>
+                                <string key="text">-Push clock &amp; pan to set reminder time
+
+-Push arrows to set recurrence period
+
+-Hold task &amp; drag to change position
+
+-You can drag and drop task into other list
+
+-Swipe right to delete
+
+-Swipe left to delete instance of recurring task
+
+-Pinch task to set precise time
+
+-Hold list name to rename or delete</string>
+                                <fontDescription key="fontDescription" name="KannadaSangamMN" family="Kannada Sangam MN" pointSize="17"/>
+                                <nil key="textColor"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="fs0-bQ-smt">
+                                <rect key="frame" x="20" y="40" width="280" height="34"/>
+                                <fontDescription key="fontDescription" name="KannadaSangamMN" family="Kannada Sangam MN" pointSize="17"/>
+                                <state key="normal" title="Support"/>
+                                <connections>
+                                    <action selector="emailSupport:" destination="xaU-kE-IpR" eventType="touchUpInside" id="Jew-lY-8uk"/>
+                                </connections>
+                            </button>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="NLu-CW-0rf">
+                                <rect key="frame" x="20" y="41" width="37" height="34"/>
+                                <fontDescription key="fontDescription" name="KannadaSangamMN" family="Kannada Sangam MN" pointSize="17"/>
+                                <state key="normal" title="Back"/>
+                                <connections>
+                                    <action selector="dismiss:" destination="xaU-kE-IpR" eventType="touchUpInside" id="cdB-pk-1Qh"/>
+                                </connections>
+                            </button>
+                        </subviews>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                        <constraints>
+                            <constraint firstItem="NLu-CW-0rf" firstAttribute="top" secondItem="fs0-bQ-smt" secondAttribute="top" constant="1" id="5xN-gB-E2N"/>
+                            <constraint firstItem="rBg-Hx-Nql" firstAttribute="trailing" secondItem="fs0-bQ-smt" secondAttribute="trailing" constant="20" id="Acb-db-A7X"/>
+                            <constraint firstItem="rBg-Hx-Nql" firstAttribute="trailing" secondItem="sAS-vT-u2w" secondAttribute="trailing" constant="20" id="CdO-YJ-6N5"/>
+                            <constraint firstItem="NLu-CW-0rf" firstAttribute="leading" secondItem="rBg-Hx-Nql" secondAttribute="leading" constant="20" id="D6L-CX-mFl"/>
+                            <constraint firstItem="sAS-vT-u2w" firstAttribute="top" secondItem="fs0-bQ-smt" secondAttribute="bottom" constant="20" id="JSe-De-Czb"/>
+                            <constraint firstItem="sAS-vT-u2w" firstAttribute="leading" secondItem="rBg-Hx-Nql" secondAttribute="leading" constant="20" id="aS7-9c-eqX"/>
+                            <constraint firstItem="fs0-bQ-smt" firstAttribute="top" secondItem="rBg-Hx-Nql" secondAttribute="top" constant="20" id="gFd-ji-rOO"/>
+                            <constraint firstItem="fs0-bQ-smt" firstAttribute="leading" secondItem="rBg-Hx-Nql" secondAttribute="leading" constant="20" id="lRX-kT-r5r"/>
+                        </constraints>
+                        <viewLayoutGuide key="safeArea" id="rBg-Hx-Nql"/>
+                    </view>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="cU8-Tu-vkG" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="-369.375" y="340.14084507042253"/>
         </scene>
     </scenes>
     <resources>
