@@ -341,10 +341,10 @@
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" textAlignment="natural" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="sAS-vT-u2w">
-                                <rect key="frame" x="20" y="94" width="280" height="372.5"/>
+                                <rect key="frame" x="20" y="94" width="280" height="309.5"/>
                                 <string key="text">-Push clock &amp; pan to set reminder time
 
--Push arrows to set recurrence period
+-Push arrows &amp; pan to set recurrence period
 
 -Hold task &amp; drag to change position
 
@@ -357,7 +357,7 @@
 -Pinch task to set precise time
 
 -Hold list name to rename or delete</string>
-                                <fontDescription key="fontDescription" name="KannadaSangamMN" family="Kannada Sangam MN" pointSize="17"/>
+                                <fontDescription key="fontDescription" name="KannadaSangamMN" family="Kannada Sangam MN" pointSize="16"/>
                                 <nil key="textColor"/>
                                 <nil key="highlightedColor"/>
                             </label>

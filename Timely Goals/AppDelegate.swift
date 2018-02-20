@@ -9,6 +9,7 @@
 import UIKit
 import CoreData
 import UserNotifications
+import GoogleMobileAds
 
 
 @UIApplicationMain
@@ -24,6 +25,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         let viewController = window!.rootViewController as! ViewController
         viewController.Items = itemStore
         
+        GADMobileAds.configure(withApplicationID: "ca-app-pub-7472837864402298~6392334338")
+
         
         return true
     }

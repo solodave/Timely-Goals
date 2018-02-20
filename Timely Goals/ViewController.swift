@@ -8,8 +8,12 @@
 
 import UIKit
 import UserNotifications
+import GoogleMobileAds
 
 class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, UITextFieldDelegate, UIGestureRecognizerDelegate, UNUserNotificationCenterDelegate {
+    
+    var bannerView: GADBannerView!
+    var bannerViewHeight: CGFloat = 0.0
     
     var isGrantedNotificationAccess:Bool = false
     
@@ -67,27 +71,40 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissDatePicker))
         tapGesture.cancelsTouchesInView = true
         
+        bannerView = GADBannerView(adSize: kGADAdSizeSmartBannerPortrait)
+        // TEST UNIT
+        bannerView.adUnitID = "ca-app-pub-3940256099942544/2934735716"
+        
+        bannerView.rootViewController = self
+        addBannerViewToView(bannerView)
+        
+        let request = GADRequest()
+        // TEST
+        request.testDevices = ["ea221b24268abe25327e221c72a03f9f"]
+        bannerView.load(request)
+        
+        bannerViewHeight = bannerView.frame.height
+        tableBottom.constant = -bannerViewHeight
+        
+        
         let hasSeenTutorial = UserDefaults.standard.bool(forKey: "hasSeenTutorial")
         if (!hasSeenTutorial && Items.itemLists.count == 0) {
             Items.itemLists.append(ItemList(label: "Tutorial"))
-            Items.itemLists[0].items.append(Item(label: "← Push clock and pan to set reminder time"))
+            Items.itemLists[0].items.append(Item(label: "← Set reminder time"))
             
-            let item1 = Item(label: "Push arrows to set recurrence period →")
+            let item1 = Item(label: "Set recurrence period →")
             item1.reminderDate = Date(timeIntervalSinceNow: 86400)
             Items.itemLists[0].items.append(item1)
-            Items.itemLists[0].items.append(Item(label: "Hold task and drag to change position"))
-            Items.itemLists[0].items.append(Item(label: "You can drag and drop task into other list"))
-            Items.itemLists[0].items.append(Item(label: "Swipe right to delete"))
+            Items.itemLists[0].items.append(Item(label: "Hold and drag to change position"))
+            Items.itemLists[0].items.append(Item(label: "Swipe right to delete task"))
                 
-            let item2 = Item(label: "Swipe left to delete instance of recurring task")
+            let item2 = Item(label: "Swipe left to delete instance")
             item2.reminderDate = Date(timeIntervalSinceNow: 86400)
             item2.isRecurring = true
             item2.recurrencePeriod = 1
             item2.recurrenceUnit = 0
             Items.itemLists[0].items.append(item2)
-            Items.itemLists[0].items.append(Item(label: "Pinch task to set precise time"))
-            Items.itemLists[0].items.append(Item(label: "Hold list name to rename or delete"))
-            Items.itemLists.append(ItemList(label: "Other List"))
+            Items.itemLists[0].items.append(Item(label: "Pinch to set precise time"))
             UserDefaults.standard.set(true, forKey: "hasSeenTutorial")
         }
 
@@ -288,6 +305,10 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     }
     
     @objc func setTime(recognizer: UIPanGestureRecognizer) {
+        
+        cancelOtherTouches(recognizer: recognizer)
+
+        
         let widthIncrement = UIScreen.main.bounds.width / 6
         let heightIncrement = UIScreen.main.bounds.height / 24
         
@@ -314,6 +335,8 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             UIView.animate(withDuration: 0.2) {
                 self.tableView.alpha = 0.15
             }
+            PanInstructions.isHidden = false
+            PanInstructions.text = "←12 hours→\n↑30 min↓\n"
         case .changed:
             components = gregorian.dateComponents([.year, .month, .day, .hour, .minute, .second], from: Date())
             components.hour = (currX * 12) + (currY / 2)
@@ -324,10 +347,9 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             selectedTableCell.DateField.text = formatDate(wrappedDate: item.reminderDate)
             tableView.reloadRows(at: [IndexPath(row: selectedCell, section:0)], with: .none)
             
-            PanInstructions.isHidden = false
             let halfHeight = UIScreen.main.bounds.height / 2
             if (recognizer.location(in: view).y < halfHeight) {
-                PanInstructionsXPosition.constant = halfHeight - 100
+                PanInstructionsXPosition.constant = halfHeight - 150
             } else {
                 PanInstructionsXPosition.constant = 150 - halfHeight
             }
@@ -357,6 +379,9 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     
     @objc func makeRecurring(recognizer: UIPanGestureRecognizer) {
         
+        cancelOtherTouches(recognizer: recognizer)
+
+        
         let widthIncrement = UIScreen.main.bounds.width / 3
         let heightIncrement = UIScreen.main.bounds.height / 6
         
@@ -374,15 +399,16 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             } else {
                 PanInstructionsXPosition.constant = 150 - halfHeight
             }
+            PanInstructions.isHidden = false
+            PanInstructions.text = "←Period→\n↑Frequency↓\n"
             self.view.layoutIfNeeded()
         case .changed:
             item.recurrenceUnit = 2 - currX
             item.recurrencePeriod = currY + 1
             
-            PanInstructions.isHidden = false
             let halfHeight = UIScreen.main.bounds.height / 2
             if (recognizer.location(in: view).y < halfHeight) {
-                PanInstructionsXPosition.constant = halfHeight - 100
+                PanInstructionsXPosition.constant = halfHeight - 150
             } else {
                 PanInstructionsXPosition.constant = 150 - halfHeight
             }
@@ -411,8 +437,10 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     
     @objc func removeTask(recognizer: UIPanGestureRecognizer)
     {
-        let panRightMax : CGFloat = 70.0
-        let panLeftMax : CGFloat = -70.0
+        cancelOtherTouches(recognizer: recognizer)
+
+        let panRightMax : CGFloat = 140.0
+        let panLeftMax : CGFloat = -140.0
         switch recognizer.state {
         case .began:
             if (recognizer.view != nil) {
@@ -507,7 +535,8 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     }
     
     @objc func didLongPressCell (recognizer: UILongPressGestureRecognizer) {
-       
+        cancelOtherTouches(recognizer: recognizer)
+        
         switch recognizer.state {
         case .began:
             view.endEditing(true)
@@ -678,6 +707,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     }
     
     @objc func listOptions (recognizer: UILongPressGestureRecognizer) {
+        cancelOtherTouches(recognizer: recognizer)
         selectedUnit = collectionCellCheck(recognizer: recognizer)
         let cell = collectionView.cellForItem(at: IndexPath(item: selectedUnit, section:0)) as! ListCell
         let menu = UIMenuController.shared
@@ -719,9 +749,10 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             } else {
                 self.selectedUnit = 0
             }
-            let cell = self.collectionView.cellForItem(at: IndexPath(row: self.selectedUnit, section: 0))!
-            cell.layer.borderWidth = 1.0
-            cell.layer.borderColor = UIColor.blue.cgColor
+            if let cell = self.collectionView.cellForItem(at: IndexPath(row: self.selectedUnit, section: 0)) as? ListCell {
+                cell.layer.borderWidth = 1.0
+                cell.layer.borderColor = UIColor.blue.cgColor
+            }
             self.collectionView.reloadData()
             self.tableView.reloadData()
             
@@ -841,6 +872,10 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     }
     
     func textFieldDidBeginEditing(_ textField: UITextField) {
+        if !DatePicker.isHidden {
+            textField.resignFirstResponder()
+            return
+        }
         editingTextField = true
     }
     
@@ -921,12 +956,14 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         
         for i in 0...Items.itemLists[selectedUnit].items.count - 1 {
             let tableCell = tableView.cellForRow(at: IndexPath(item: i, section: 0))
-            
-            let recframe = originConverter(targetView: (recognizer.view)!)
-            let newframe = originConverter(targetView: tableCell!)
-            
-            if (recframe.intersects(newframe)) {
-                return i
+            if let view = recognizer.view {
+                let recframe = originConverter(targetView: (view))
+                if let cell = tableCell {
+                    let newframe = originConverter(targetView: cell)
+                    if (recframe.intersects(newframe)) {
+                        return i
+                    }
+                }
             }
         }
         return -1
@@ -1131,13 +1168,29 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     
     @objc func keyboardWillShow(notification: NSNotification) {
          if let keyboardSize = (notification.userInfo?[UIKeyboardFrameBeginUserInfoKey] as? NSValue)?.cgRectValue {
-            tableBottom.constant = -keyboardSize.height
+            tableBottom.constant = -keyboardSize.height - bannerViewHeight
                 self.view.layoutIfNeeded()
         }
     }
     
     @objc func keyboardWillHide(notification: NSNotification) {
-        tableBottom.constant = 0
+        tableBottom.constant = -bannerViewHeight
             self.view.layoutIfNeeded()
+    }
+    
+    func addBannerViewToView(_ bannerView: GADBannerView) {
+        bannerView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(bannerView)
+        view.addConstraints(
+            [NSLayoutConstraint(item: bannerView, attribute: .bottom, relatedBy: .equal,toItem: bottomLayoutGuide,attribute: .top, multiplier: 1, constant: 0),
+             NSLayoutConstraint(item: bannerView, attribute: .centerX, relatedBy: .equal, toItem: view, attribute: .centerX,multiplier: 1, constant: 0)
+            ])
+    }
+    
+    func cancelOtherTouches(recognizer: UIGestureRecognizer) {
+        if !DatePicker.isHidden {
+            recognizer.isEnabled = false
+            recognizer.isEnabled = true
+        }
     }
 }
