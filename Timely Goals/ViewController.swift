@@ -1147,6 +1147,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                                 unit = .month
                             }
                             item.reminderDate = Calendar.current.date(byAdding: unit, value: item.recurrencePeriod, to: item.reminderDate!)
+                            self.createPushNotification(item: item)
                         } else {
                             self.Items.itemLists[self.selectedUnit].items.remove(at: self.selectedCell)
                             UIApplication.shared.applicationIconBadgeNumber = self.overdueTasks()
