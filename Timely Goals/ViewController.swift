@@ -106,6 +106,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             Items.itemLists[0].items.append(item2)
             Items.itemLists[0].items.append(Item(label: "Pinch to set precise time"))
             UserDefaults.standard.set(true, forKey: "hasSeenTutorial")
+            UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
         }
 
         
@@ -742,7 +743,11 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         let okAction = UIAlertAction(title: "Yes", style: .destructive) {
             (action) -> Void in
             
+            for item in self.Items.itemLists[self.selectedUnit].items {
+                UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [item.id])
+            }
             self.Items.itemLists.remove(at: self.selectedUnit)
+            
             self.collectionView.deleteItems(at: [IndexPath(item: self.selectedUnit, section:0)])
             if (self.selectedUnit > 0) {
                 self.selectedUnit -= 1
