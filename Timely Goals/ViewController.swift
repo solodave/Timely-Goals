@@ -1098,11 +1098,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 if (seconds > 0) {
                     //add notification code here
                     let content = UNMutableNotificationContent()
-                    if let field = selectedTableCell.TaskField, let text = field.text {
-                        content.body = text
-                    } else {
-                        return
-                    }
+                    content.body = item.label
                     content.categoryIdentifier = "category"
                     content.sound = UNNotificationSound(named: "silence")
 
@@ -1138,7 +1134,8 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
         for list in Items.itemLists {
-            for item in list.items {
+            for i in 0...list.items.count - 1 {
+                let item = list.items[i]
                 if item.id == response.notification.request.identifier {
                     switch response.actionIdentifier {
                     case "removeTask":
@@ -1153,14 +1150,17 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                             }
                             item.reminderDate = Calendar.current.date(byAdding: unit, value: item.recurrencePeriod, to: item.reminderDate!)
                             self.createPushNotification(item: item)
+                            return
                         } else {
-                            self.Items.itemLists[self.selectedUnit].items.remove(at: self.selectedCell)
+                            self.Items.itemLists[self.selectedUnit].items.remove(at: i)
                             UIApplication.shared.applicationIconBadgeNumber = self.overdueTasks()
+                            return
                         }
                     case "remindOneHour":
                         if let date = item.reminderDate {
                             item.reminderDate = date.addingTimeInterval(3600)
                             createPushNotification(item: item)
+                            return
                         }
                     default:
                         print("Error")
