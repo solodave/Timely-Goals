@@ -561,9 +561,11 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 dragX = Double((dragLabel?.frame.origin.x)!)
                 dragY = (dragLabel?.center.y)! - recognizer.location(in:view).y
 
+                selectedTableCell.isHidden = true
                 self.view.setNeedsDisplay()
                 originalOrigin = selectedTableCell.TaskField.convert(CGPoint.zero, to: view)
-                self.dragLabel?.center.y = recognizer.location(in: self.view).y
+                originalOrigin.y += 2
+                self.dragLabel?.center.y = recognizer.location(in: self.view).y + 2
                 UIView.animate(withDuration: 0.3) {
                     self.selectedTableCell.RecurringButton.alpha = 0.0
                     self.selectedTableCell.RemindButton.alpha = 0.0
@@ -692,7 +694,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             if (!isIntersection) {
                 let item = Items.itemLists[selectedUnit].items[selectedCell]
                 UIView.animate(withDuration: 0.3, animations: { () -> Void in
-                    self.dragLabel?.frame.origin.y = self.originalOrigin.y
+                    self.dragLabel?.frame.origin = self.originalOrigin
                     self.selectedTableCell.RecurringButton.alpha = item.isRecurring ? 1.0 : 0.4
                     self.selectedTableCell.RemindButton.alpha = item.reminderDate != nil ? 1.0 : 0.4
                     self.selectedTableCell.DateField.alpha = 1.0
@@ -708,26 +710,32 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     }
     
     @objc func listOptions (recognizer: UILongPressGestureRecognizer) {
-        cancelOtherTouches(recognizer: recognizer)
-        selectedUnit = collectionCellCheck(recognizer: recognizer)
-        let cell = collectionView.cellForItem(at: IndexPath(item: selectedUnit, section:0)) as! ListCell
-        let menu = UIMenuController.shared
-        
-            becomeFirstResponder()
-        
-            let renameItem = UIMenuItem(title: "Rename", action: #selector(renameList))
-            let deleteItem = UIMenuItem(title: "Delete", action: #selector(deleteList))
-        
-            menu.menuItems = [renameItem, deleteItem]
+        if recognizer.state == .began {
+            if editingTextField {
+                return
+            }
+            cancelOtherTouches(recognizer: recognizer)
+            selectedUnit = collectionCellCheck(recognizer: recognizer)
             
-            let targetRect = CGRect(x: cell.center.x, y: cell.frame.height + 10, width: 2, height: 2)
-            menu.setTargetRect(targetRect, in: self.view)
-            menu.setMenuVisible(true, animated: true)
-        
-        recognizer.isEnabled = false
-        recognizer.isEnabled = true
-        collectionView.reloadData()
-
+            let cell = collectionView.cellForItem(at: IndexPath(item: selectedUnit, section:0)) as! ListCell
+            let menu = UIMenuController.shared
+            
+                becomeFirstResponder()
+            
+                let renameItem = UIMenuItem(title: "Rename", action: #selector(renameList))
+                let deleteItem = UIMenuItem(title: "Delete", action: #selector(deleteList))
+            
+                menu.menuItems = [renameItem, deleteItem]
+                let touchPoint = recognizer.location(in: view)
+                let targetRect = CGRect(x: touchPoint.x, y: touchPoint.y, width: cell.frame.width / 2, height: cell.frame.height)
+                menu.setTargetRect(targetRect, in: self.view)
+                menu.setMenuVisible(true, animated: true)
+            
+            recognizer.isEnabled = false
+            recognizer.isEnabled = true
+            collectionView.reloadData()
+            tableView.reloadData()
+        }
 
     }
     @objc func renameList() {
