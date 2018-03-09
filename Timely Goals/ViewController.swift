@@ -9,6 +9,7 @@
 import UIKit
 import UserNotifications
 import GoogleMobileAds
+import StoreKit
 
 class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, UITextFieldDelegate, UIGestureRecognizerDelegate, UNUserNotificationCenterDelegate {
     
@@ -549,12 +550,22 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 let label = UILabel(frame: textFrame)
                 label.translatesAutoresizingMaskIntoConstraints = false
                 label.text = Items.itemLists[selectedUnit].items[selectedCell].label
-                label.font = UIFont(name: "Kannada Sangam MN", size: 17.0)
+                var yOffset: CGFloat = 2.0
+                if let fontSize = selectedTableCell.TaskField.font?.pointSize {
+                    label.font = UIFont(name: "Kannada Sangam MN", size: fontSize)
+                    yOffset = 19.0 - fontSize
+                    if (fontSize < 17.0) {
+                        yOffset -= 1
+                    }
+                } else {
+                    label.font = UIFont(name: "Kannada Sangam MN", size: 17.0)
+                }
                 dragLabel = label
                 view.addSubview(dragLabel!)
                 view.bringSubview(toFront: dragLabel!)
                 dragTopConstraint = (dragLabel?.topAnchor.constraint(equalTo: selectedTableCell.TaskField.topAnchor))!
                 dragLeadingConstraint = (dragLabel?.leadingAnchor.constraint(equalTo: selectedTableCell.TaskField.leadingAnchor))!
+                dragTopConstraint.constant = yOffset
                 dragTopConstraint.isActive = true
                 dragLeadingConstraint.isActive = true
                 
@@ -562,15 +573,15 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 dragY = (dragLabel?.center.y)! - recognizer.location(in:view).y
 
                 selectedTableCell.isHidden = true
-                self.view.setNeedsDisplay()
                 originalOrigin = selectedTableCell.TaskField.convert(CGPoint.zero, to: view)
-                originalOrigin.y += 2
-                self.dragLabel?.center.y = recognizer.location(in: self.view).y + 2
+                originalOrigin.y += yOffset
+                self.dragLabel?.center.y = recognizer.location(in: self.view).y + yOffset
                 UIView.animate(withDuration: 0.3) {
                     self.selectedTableCell.RecurringButton.alpha = 0.0
                     self.selectedTableCell.RemindButton.alpha = 0.0
                     self.selectedTableCell.DateField.alpha = 0.0
                 }
+                self.view.setNeedsDisplay()
             }
         case .changed:
             let point = recognizer.location(in: view)
@@ -715,12 +726,20 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 return
             }
             cancelOtherTouches(recognizer: recognizer)
-            selectedUnit = collectionCellCheck(recognizer: recognizer)
             
-            let cell = collectionView.cellForItem(at: IndexPath(item: selectedUnit, section:0)) as! ListCell
+            if let oldCell = collectionView.cellForItem(at: IndexPath(item: selectedUnit, section:0)) as? ListCell {
+                oldCell.layer.borderWidth = 0
+                oldCell.layer.borderColor = UIColor.clear.cgColor
+            }
+            
+            tempUnit = collectionCellCheck(recognizer: recognizer)
+            
+            let cell = collectionView.cellForItem(at: IndexPath(item: tempUnit, section:0)) as! ListCell
+            cell.layer.borderWidth = 1.0
+            cell.layer.borderColor = UIColor.blue.cgColor
             let menu = UIMenuController.shared
             
-                becomeFirstResponder()
+                self.becomeFirstResponder()
             
                 let renameItem = UIMenuItem(title: "Rename", action: #selector(renameList))
                 let deleteItem = UIMenuItem(title: "Delete", action: #selector(deleteList))
@@ -731,20 +750,24 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 menu.setTargetRect(targetRect, in: self.view)
                 menu.setMenuVisible(true, animated: true)
             
-            recognizer.isEnabled = false
-            recognizer.isEnabled = true
-            collectionView.reloadData()
-            tableView.reloadData()
+            //recognizer.isEnabled = false
+            //recognizer.isEnabled = true
+            
         }
-
     }
     @objc func renameList() {
+        selectedUnit = tempUnit
         let cell = collectionView.cellForItem(at: IndexPath(item: selectedUnit, section:0)) as! ListCell
         cell.ListField.isEnabled = true
         cell.ListField.becomeFirstResponder()
+        
+        
+        tableView.reloadData()
+        
     }
     
     @objc func deleteList() {
+        selectedUnit = tempUnit
         let oldCell = self.collectionView.cellForItem(at: IndexPath(row: self.selectedUnit, section: 0)) as! ListCell
         let label = oldCell.ListField.text!
         let alertController = UIAlertController(title: "Delete List \(label)?", message: nil, preferredStyle: .actionSheet)
@@ -768,7 +791,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             }
             self.collectionView.reloadData()
             self.tableView.reloadData()
-            
+            self.tempUnit = self.selectedUnit
         }
         let cancelAction = UIAlertAction(title: "No", style: .cancel) {
             (action) -> Void in
@@ -935,6 +958,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         }
         textField.isEnabled = false
         editingTextField = false
+        //SKStoreReviewController.requestReview()
     }
     
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
