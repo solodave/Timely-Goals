@@ -17,6 +17,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     var bannerViewHeight: CGFloat = 0.0
     
     var isGrantedNotificationAccess:Bool = false
+    var collectionViewMenuMode: Bool = false
     
     var Items: ItemStore!
     
@@ -50,6 +51,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     @IBOutlet var tableView: UITableView!
     @IBOutlet var collectionView: UICollectionView!
     
+    @IBOutlet var bufferView: UIView!
     @IBOutlet var DatePicker: UIDatePicker!
     
     @IBOutlet var DatePickerConstraint: NSLayoutConstraint!
@@ -572,28 +574,25 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 dragX = Double((dragLabel?.frame.origin.x)!)
                 dragY = (dragLabel?.center.y)! - recognizer.location(in:view).y
 
-                selectedTableCell.isHidden = true
+                self.selectedTableCell.TaskField.isHidden = true
                 originalOrigin = selectedTableCell.TaskField.convert(CGPoint.zero, to: view)
                 originalOrigin.y += yOffset
                 self.dragLabel?.center.y = recognizer.location(in: self.view).y + yOffset
-                UIView.animate(withDuration: 0.3) {
-                    self.selectedTableCell.RecurringButton.alpha = 0.0
-                    self.selectedTableCell.RemindButton.alpha = 0.0
-                    self.selectedTableCell.DateField.alpha = 0.0
-                }
+                UIView.animate(withDuration: 0.3, animations: { () -> Void in
+                    self.selectedTableCell.alpha = 0.0
+                }, completion: { finished in
+                    self.selectedTableCell.isHidden = true
+                })
                 self.view.setNeedsDisplay()
             }
         case .changed:
             let point = recognizer.location(in: view)
-            let selectedTableCell = tableView.cellForRow(at: IndexPath(item: selectedCell, section: 0)) as! TaskCell
+            selectedTableCell = tableView.cellForRow(at: IndexPath(item: selectedCell, section: 0)) as! TaskCell
             dragTopConstraint.isActive = false
             dragLeadingConstraint.isActive = false
-            if (!selectedTableCell.isHidden) {
-                selectedTableCell.isHidden = true
-
-            } else {
-                let tView = originConverter(targetView: tableView)
-                if tView.contains(point) {
+                //let tView = originConverter(targetView: tableView)
+            let bView = originConverter(targetView: bufferView)
+                if !bView.contains(point) && point.y > 20 {
                    UIView.animate(withDuration: 0.1) {
                         self.dragLabel?.center.y = recognizer.location(in: self.view).y
                         self.dragLabel?.frame.origin.x = CGFloat(self.dragX)
@@ -603,7 +602,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                         self.dragLabel?.center = recognizer.location(in: self.view)
                     }
                 }
-            }
+            
             var isIntersection = false
             for i in 0...Items.itemLists.count - 1 {
                 let point = tableCollectionIntersect(it: i)
@@ -641,28 +640,33 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             for i in 0...Items.itemLists[selectedUnit].items.count - 1 {
                 let indexPath1 = IndexPath(row: i, section: 0)
                 let indexPath2 = IndexPath(row: selectedCell, section: 0)
-                let tableCell = tableView.cellForRow(at: indexPath1)!
-                let newframe = originConverter(targetView: tableCell)
-                
-                if (newframe.contains(point)) {
-                    if i == selectedCell {
-                        return
-                    }
-                    tableView.beginUpdates()
-                    Items.itemLists[selectedUnit].items.swapAt(selectedCell, i)
-                    tableView.moveRow(at: indexPath1, to: indexPath2)
-                    tableView.moveRow(at: indexPath2, to: indexPath1)
-                    tableView.endUpdates()
+                if let tableCell = tableView.cellForRow(at: indexPath1) {
+                    let newframe = originConverter(targetView: tableCell)
                     
-                    originalOrigin.y += tableCell.frame.height * (selectedCell > i ? -1 : 1)
-                    selectedCell = i
-                    break
+                    if (newframe.contains(point)) {
+                        if i == selectedCell {
+                            return
+                        }
+                        tableView.beginUpdates()
+                        Items.itemLists[selectedUnit].items.swapAt(selectedCell, i)
+                        tableView.moveRow(at: indexPath1, to: indexPath2)
+                        tableView.moveRow(at: indexPath2, to: indexPath1)
+                        tableView.endUpdates()
+                        
+                        originalOrigin.y += tableCell.frame.height * (selectedCell > i ? -1 : 1)
+                        selectedCell = i
+                        selectedTableCell.alpha = 1.0
+                        selectedTableCell = tableView.cellForRow(at: IndexPath(item: selectedCell, section: 0)) as! TaskCell
+                        selectedTableCell.alpha = 0.0
+                        break
+                    }
                 }
             }
         case .ended:
+            tempCell = selectedCell
             if (dragLabel == nil) { return }
-            dragTopConstraint.isActive = false
-            dragLeadingConstraint.isActive = false
+            //dragTopConstraint.isActive = false
+            //dragLeadingConstraint.isActive = false
             //selectedTableCell.TaskField.center.y += self.dragY
             let oldDropCell = dropCell
             dropCell = nil
@@ -673,16 +677,13 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                     cell.backgroundColor = UIColor.clear
                 }
             }
-            selectedTableCell.isHidden = false
-            selectedTableCell.TaskField.isHidden = true
-            
             var isIntersection = false
             for i in 0...Items.itemLists.count - 1 {
                 let point = tableCollectionIntersect(it: i)
                 if point != CGPoint.zero {
                     let item = Items.itemLists[selectedUnit].items[selectedCell]
                     //item.modifiedDate = Date()
-                    Items.itemLists[i].items.append(item)
+                    Items.itemLists[i].items.insert(item, at: 0)
                     Items.itemLists[selectedUnit].items.remove(at: selectedCell)
                     tableView.deleteRows(at: [IndexPath(row: selectedCell, section: 0)], with: .none)
                     
@@ -692,10 +693,13 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                     }, completion: { finished in
                         self.dragLabel?.removeFromSuperview()
                         self.dragLabel = nil
+                        //self.selectedTableCell.TaskField.isHidden = false
+                        //self.selectedTableCell.RecurringButton.alpha = 1.0
+                        //self.selectedTableCell.RemindButton.alpha = 1.0
+                        //self.selectedTableCell.DateField.alpha = 1.0
+                        self.selectedTableCell.isHidden = false
+                        self.selectedTableCell.alpha = 1.0
                         self.selectedTableCell.TaskField.isHidden = false
-                        self.selectedTableCell.RecurringButton.alpha = 1.0
-                        self.selectedTableCell.RemindButton.alpha = 1.0
-                        self.selectedTableCell.DateField.alpha = 1.0
                     })
                     isIntersection = true
                     break
@@ -704,11 +708,13 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             
             if (!isIntersection) {
                 let item = Items.itemLists[selectedUnit].items[selectedCell]
+                selectedTableCell.isHidden = false
                 UIView.animate(withDuration: 0.3, animations: { () -> Void in
                     self.dragLabel?.frame.origin = self.originalOrigin
-                    self.selectedTableCell.RecurringButton.alpha = item.isRecurring ? 1.0 : 0.4
-                    self.selectedTableCell.RemindButton.alpha = item.reminderDate != nil ? 1.0 : 0.4
-                    self.selectedTableCell.DateField.alpha = 1.0
+                    //self.selectedTableCell.RecurringButton.alpha = item.isRecurring ? 1.0 : 0.4
+                    //self.selectedTableCell.RemindButton.alpha = item.reminderDate != nil ? 1.0 : 0.4
+                    //self.selectedTableCell.DateField.alpha = 1.0
+                    self.selectedTableCell.alpha = 1.0
                 }, completion: { finished in
                     self.dragLabel?.removeFromSuperview()
                     self.dragLabel = nil
@@ -725,6 +731,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             if editingTextField {
                 return
             }
+            collectionViewMenuMode = true
             cancelOtherTouches(recognizer: recognizer)
             
             if let oldCell = collectionView.cellForItem(at: IndexPath(item: selectedUnit, section:0)) as? ListCell {
@@ -750,12 +757,21 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 menu.setTargetRect(targetRect, in: self.view)
                 menu.setMenuVisible(true, animated: true)
             
+            NotificationCenter.default.addObserver(self, selector: #selector(switchTableOnMenuHide), name: NSNotification.Name.UIMenuControllerDidHideMenu, object: nil)
             //recognizer.isEnabled = false
             //recognizer.isEnabled = true
             
         }
     }
+    
+    @objc func switchTableOnMenuHide() {
+        collectionViewMenuMode = false
+        selectedUnit = tempUnit
+        
+        tableView.reloadData()
+    }
     @objc func renameList() {
+        collectionViewMenuMode = false
         selectedUnit = tempUnit
         let cell = collectionView.cellForItem(at: IndexPath(item: selectedUnit, section:0)) as! ListCell
         cell.ListField.isEnabled = true
@@ -767,6 +783,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     }
     
     @objc func deleteList() {
+        collectionViewMenuMode = false
         selectedUnit = tempUnit
         let oldCell = self.collectionView.cellForItem(at: IndexPath(row: self.selectedUnit, section: 0)) as! ListCell
         let label = oldCell.ListField.text!
@@ -785,6 +802,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             } else {
                 self.selectedUnit = 0
             }
+            self.collectionView.scrollToItem(at: IndexPath(item: self.selectedUnit, section: 0), at: .left, animated: true)
             if let cell = self.collectionView.cellForItem(at: IndexPath(row: self.selectedUnit, section: 0)) as? ListCell {
                 cell.layer.borderWidth = 1.0
                 cell.layer.borderColor = UIColor.blue.cgColor
@@ -908,7 +926,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     }
     
     func textFieldDidBeginEditing(_ textField: UITextField) {
-        if !DatePicker.isHidden {
+        if !DatePicker.isHidden || collectionViewMenuMode {
             textField.resignFirstResponder()
             return
         }

@@ -323,6 +323,7 @@
                         <outlet property="DatePickerConstraint" destination="ZEZ-Mw-BoV" id="Tt4-gt-RkW"/>
                         <outlet property="PanInstructions" destination="lpB-6s-O2K" id="ni7-dg-vwj"/>
                         <outlet property="PanInstructionsXPosition" destination="iCu-4s-3qy" id="mqn-DL-Qjb"/>
+                        <outlet property="bufferView" destination="Ei6-fm-ZJ0" id="qyz-UR-zaQ"/>
                         <outlet property="collectionView" destination="L6x-cJ-ecA" id="L36-tH-2OT"/>
                         <outlet property="tableBottom" destination="7P2-IG-fgY" id="eYX-CN-VAG"/>
                         <outlet property="tableView" destination="b0v-XL-Ht0" id="5Sz-ry-V5I"/>
