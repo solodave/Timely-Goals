@@ -540,7 +540,6 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     
     @objc func didLongPressCell (recognizer: UILongPressGestureRecognizer) {
         cancelOtherTouches(recognizer: recognizer)
-        
         switch recognizer.state {
         case .began:
             view.endEditing(true)
@@ -846,10 +845,11 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 }
             }
         } else {
-            let cell = tableView.cellForRow(at: indexPath) as! TaskCell
-            if let field = cell.TaskField {
-                field.isEnabled = true
-                field.becomeFirstResponder()
+            if let cell = tableView.cellForRow(at: indexPath) as? TaskCell {
+                if let field = cell.TaskField {
+                    field.isEnabled = true
+                    field.becomeFirstResponder()
+                }
             }
         }
     }
@@ -929,11 +929,16 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         if !DatePicker.isHidden || collectionViewMenuMode {
             textField.resignFirstResponder()
             return
+        } else {
+            editingTextField = true
         }
-        editingTextField = true
     }
     
     func textFieldDidEndEditing(_ textField: UITextField) {
+        if !editingTextField {
+            textField.resignFirstResponder()
+            return
+        }
         // If tag is 99
         if (textField.tag == 99) {
             if let text = textField.text, text != "" {
@@ -1183,6 +1188,9 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     }
     
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
+        if response.actionIdentifier == UNNotificationDefaultActionIdentifier {
+            return
+        }
         for list in Items.itemLists {
             for i in 0...list.items.count - 1 {
                 let item = list.items[i]
