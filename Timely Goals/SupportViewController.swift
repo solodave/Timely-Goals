@@ -15,7 +15,7 @@ class SupportViewController: UIViewController, MFMailComposeViewControllerDelega
         if MFMailComposeViewController.canSendMail() {
             let mail = MFMailComposeViewController()
             mail.mailComposeDelegate = self
-            mail.setToRecipients(["solodave@gmail.com"])
+            mail.setToRecipients(["solodavestudios@gmail.com"])
             mail.setSubject("Report Issue")
             mail.setMessageBody("<p>Dear Support,</p>", isHTML: true)
             present(mail, animated: true, completion: nil)

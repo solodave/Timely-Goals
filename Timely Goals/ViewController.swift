@@ -260,26 +260,27 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     
     func turnOffRecurrence(button: UIButton, noReminder: Bool) {
         for i in 0...Items.itemLists[selectedUnit].items.count - 1 {
-            let tableCell = tableView.cellForRow(at: IndexPath(item: i, section: 0))
-            
-            let recframe = originConverter(targetView: (button))
-            let newframe = originConverter(targetView: tableCell!)
-            
-            if (recframe.intersects(newframe)) {
-                selectedTableCell = tableCell as! TaskCell
-                if let path = tableView.indexPath(for: selectedTableCell) {
-                    selectedCell = path.row
-                    let item = Items.itemLists[selectedUnit].items[selectedCell]
-                    item.recurrenceUnit = -1
-                    item.recurrencePeriod = 0
-                    item.isRecurring = false
-                    
-                    if (noReminder) {
-                        item.reminderDate = nil
+            if let tableCell = tableView.cellForRow(at: IndexPath(item: i, section: 0)) {
+        
+                let recframe = originConverter(targetView: (button))
+                let newframe = originConverter(targetView: tableCell)
+                
+                if (recframe.intersects(newframe)) {
+                    selectedTableCell = tableCell as! TaskCell
+                    if let path = tableView.indexPath(for: selectedTableCell) {
+                        selectedCell = path.row
+                        let item = Items.itemLists[selectedUnit].items[selectedCell]
+                        item.recurrenceUnit = -1
+                        item.recurrencePeriod = 0
+                        item.isRecurring = false
+                        
+                        if (noReminder) {
+                            item.reminderDate = nil
+                        }
+                        
+                        tableView.reloadRows(at: [path], with: .none)
+                        break
                     }
-                    
-                    tableView.reloadRows(at: [path], with: .none)
-                    break
                 }
             }
         }
@@ -580,7 +581,11 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 UIView.animate(withDuration: 0.3, animations: { () -> Void in
                     self.selectedTableCell.alpha = 0.0
                 }, completion: { finished in
-                    self.selectedTableCell.isHidden = true
+                    if recognizer.state != .possible {
+                        self.selectedTableCell.isHidden = true
+                    } else {
+                        self.selectedTableCell.alpha = 1.0
+                    }
                 })
                 self.view.setNeedsDisplay()
             }
@@ -734,8 +739,8 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             cancelOtherTouches(recognizer: recognizer)
             
             if let oldCell = collectionView.cellForItem(at: IndexPath(item: selectedUnit, section:0)) as? ListCell {
-                oldCell.layer.borderWidth = 0
-                oldCell.layer.borderColor = UIColor.clear.cgColor
+                oldCell.layer.borderWidth = 0.0
+                oldCell.layer.borderColor = UIColor.lightGray.cgColor
             }
             
             tempUnit = collectionCellCheck(recognizer: recognizer)
@@ -770,20 +775,24 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         tableView.reloadData()
     }
     @objc func renameList() {
+        editingTextField = true
         collectionViewMenuMode = false
         selectedUnit = tempUnit
         let cell = collectionView.cellForItem(at: IndexPath(item: selectedUnit, section:0)) as! ListCell
         cell.ListField.isEnabled = true
         cell.ListField.becomeFirstResponder()
         
-        
         tableView.reloadData()
-        
+        let menu = UIMenuController.shared
+        menu.menuItems = []
     }
     
     @objc func deleteList() {
         collectionViewMenuMode = false
         selectedUnit = tempUnit
+        let menu = UIMenuController.shared
+        menu.menuItems = []
+        
         let oldCell = self.collectionView.cellForItem(at: IndexPath(row: self.selectedUnit, section: 0)) as! ListCell
         let label = oldCell.ListField.text!
         let alertController = UIAlertController(title: "Delete List \(label)?", message: nil, preferredStyle: .actionSheet)
@@ -884,7 +893,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 cell.backgroundColor = UIColor.clear
             }
             cell.layer.borderWidth = indexPath.row == selectedUnit ? 1.0 : 0.0
-            cell.layer.borderColor = indexPath.row == selectedUnit ? UIColor.blue.cgColor : UIColor.clear.cgColor
+            cell.layer.borderColor = indexPath.row == selectedUnit ? UIColor.blue.cgColor : UIColor.lightGray.cgColor
 
             if let dCell = dropCell, dCell == indexPath.row {
                 UIView.animate(withDuration: 0.3) {
@@ -981,7 +990,6 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         }
         textField.isEnabled = false
         editingTextField = false
-        //SKStoreReviewController.requestReview()
     }
     
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
@@ -1013,15 +1021,16 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     }
     
     func tableCellCheck(recognizer: UIGestureRecognizer) -> Int {
-        
-        for i in 0...Items.itemLists[selectedUnit].items.count - 1 {
-            let tableCell = tableView.cellForRow(at: IndexPath(item: i, section: 0))
-            if let view = recognizer.view {
-                let recframe = originConverter(targetView: (view))
-                if let cell = tableCell {
-                    let newframe = originConverter(targetView: cell)
-                    if (recframe.intersects(newframe)) {
-                        return i
+        if Items.itemLists[selectedUnit].items.count > 0 {
+            for i in 0...Items.itemLists[selectedUnit].items.count - 1 {
+                let tableCell = tableView.cellForRow(at: IndexPath(item: i, section: 0))
+                if let view = recognizer.view {
+                    let recframe = originConverter(targetView: (view))
+                    if let cell = tableCell {
+                        let newframe = originConverter(targetView: cell)
+                        if (recframe.intersects(newframe)) {
+                            return i
+                        }
                     }
                 }
             }

@@ -66,6 +66,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         if (viewController.tableView != nil) {
             viewController.tableView.reloadData()
         }
+        SKStoreReviewController.requestReview()
     }
 
     func applicationWillTerminate(_ application: UIApplication) {
