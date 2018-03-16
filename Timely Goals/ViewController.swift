@@ -11,7 +11,10 @@ import UserNotifications
 import GoogleMobileAds
 import StoreKit
 
-class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, UITextFieldDelegate, UIGestureRecognizerDelegate, UNUserNotificationCenterDelegate {
+class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, UITextFieldDelegate, UIGestureRecognizerDelegate, UNUserNotificationCenterDelegate, UIScrollViewDelegate {
+    
+    var animationInProgress = false
+    var handImage: UIImageView!
     
     var bannerView: GADBannerView!
     var bannerViewHeight: CGFloat = 0.0
@@ -89,13 +92,12 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         bannerViewHeight = bannerView.frame.height
         tableBottom.constant = -bannerViewHeight
         
-        
         let hasSeenTutorial = UserDefaults.standard.bool(forKey: "hasSeenTutorial")
         if (!hasSeenTutorial && Items.itemLists.count == 0) {
             Items.itemLists.append(ItemList(label: "Tutorial"))
-            Items.itemLists[0].items.append(Item(label: "← Set reminder time"))
+            Items.itemLists[0].items.append(Item(label: "← Reminder (push & drag finger)"))
             
-            let item1 = Item(label: "Set recurrence period →")
+            let item1 = Item(label: "Recurrence (push & drag finger) →")
             item1.reminderDate = Date(timeIntervalSinceNow: 86400)
             Items.itemLists[0].items.append(item1)
             Items.itemLists[0].items.append(Item(label: "Hold and drag to change position"))
@@ -108,10 +110,9 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             item2.recurrenceUnit = 0
             Items.itemLists[0].items.append(item2)
             Items.itemLists[0].items.append(Item(label: "Pinch to set precise time"))
-            UserDefaults.standard.set(true, forKey: "hasSeenTutorial")
             UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
+            UserDefaults.standard.set(true, forKey: "hasSeenTutorial")
         }
-
         
         UNUserNotificationCenter.current().delegate = self
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge], completionHandler: { (granted, error) in
@@ -216,6 +217,10 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     
     @objc func showDatePicker(recognizer: UIPinchGestureRecognizer) {
         if (!editingTextField) {
+            if let image = handImage {
+                image.removeFromSuperview()
+            }
+
             DatePicker.isHidden = false
             selectedCell = tableCellCheck(recognizer: recognizer)
             selectedTableCell = tableView.cellForRow(at: IndexPath(item: selectedCell, section: 0)) as! TaskCell
@@ -259,6 +264,9 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     
     
     func turnOffRecurrence(button: UIButton, noReminder: Bool) {
+        if let image = handImage {
+            image.removeFromSuperview()
+        }
         for i in 0...Items.itemLists[selectedUnit].items.count - 1 {
             if let tableCell = tableView.cellForRow(at: IndexPath(item: i, section: 0)) {
         
@@ -270,6 +278,16 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                     if let path = tableView.indexPath(for: selectedTableCell) {
                         selectedCell = path.row
                         let item = Items.itemLists[selectedUnit].items[selectedCell]
+                        
+                        if (item.reminderDate == nil) {
+                            let point = tableView.convert(selectedTableCell.center, to: view)
+                            fingerTutorial(position: point.y, isReminder: true)
+                        }
+                        if item.recurrenceUnit == -1 && noReminder == false {
+                            let point = tableView.convert(selectedTableCell.center, to: view)
+                            fingerTutorial(position: point.y, isReminder: false)
+                        }
+                        
                         item.recurrenceUnit = -1
                         item.recurrencePeriod = 0
                         item.isRecurring = false
@@ -287,11 +305,17 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     }
     
     @objc func disableReminder(button: UIButton) {
+        if editingTextField {
+            return
+        }
         turnOffRecurrence(button: button, noReminder: true)
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [String(Items.itemLists[selectedUnit].items[selectedCell].id)])
     }
     
     @objc func disableRecurrence(button: UIButton) {
+        if editingTextField {
+            return
+        }
         turnOffRecurrence(button: button, noReminder: false)
     }
     
@@ -311,8 +335,13 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     
     @objc func setTime(recognizer: UIPanGestureRecognizer) {
         
+        if editingTextField {
+            return
+        }
         cancelOtherTouches(recognizer: recognizer)
-
+        if let image = handImage {
+            image.removeFromSuperview()
+        }
         
         let widthIncrement = UIScreen.main.bounds.width / 6
         let heightIncrement = UIScreen.main.bounds.height / 24
@@ -369,6 +398,12 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             }
             PanInstructions.isHidden = true
             let item = Items.itemLists[selectedUnit].items[selectedCell]
+            
+            if (item.reminderDate == nil) {
+                fingerTutorial(position: recognizer.location(in: view).y, isReminder: true)
+            }
+            
+            
             selectedTableCell.DateField.text = formatDate(wrappedDate: item.reminderDate)
             tableView.reloadRows(at: [IndexPath(row: selectedCell, section: 0)], with: .none)
             createPushNotification(item: item)
@@ -383,8 +418,13 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     }
     
     @objc func makeRecurring(recognizer: UIPanGestureRecognizer) {
-        
+        if editingTextField {
+            return
+        }
         cancelOtherTouches(recognizer: recognizer)
+        if let image = handImage {
+            image.removeFromSuperview()
+        }
 
         
         let widthIncrement = UIScreen.main.bounds.width / 3
@@ -392,12 +432,13 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         
         currX = Int(floor(recognizer.location(in: view).x / widthIncrement))
         currY = Int(floor(recognizer.location(in: view).y / heightIncrement))
+        setCells(recognizer: recognizer)
+
         let item = Items.itemLists[selectedUnit].items[selectedCell]
         
         switch recognizer.state {
         case .began:
             item.isRecurring = true
-            setCells(recognizer: recognizer)
             let halfHeight = UIScreen.main.bounds.height / 2
             if (recognizer.location(in: view).y < halfHeight) {
                 PanInstructionsXPosition.constant = halfHeight - 100
@@ -407,6 +448,9 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             PanInstructions.isHidden = false
             PanInstructions.text = "←Period→\n↑Frequency↓\n"
             self.view.layoutIfNeeded()
+            UIView.animate(withDuration: 0.25) {
+                self.tableView.alpha = 0.15
+            }
         case .changed:
             item.recurrenceUnit = 2 - currX
             item.recurrencePeriod = currY + 1
@@ -425,11 +469,12 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 selectedTableCell.DateField.text = "\(formatDate(wrappedDate: item.reminderDate)!), \(recurString)"
                 tableView.reloadRows(at: [IndexPath(row: selectedCell, section:0)], with: .none)
                 PanInstructions.text = "←Period→\n↑Frequency↓\n\(recurString)"
-                UIView.animate(withDuration: 0.25) {
-                    self.tableView.alpha = 0.15
-                }
             }
         case .ended:
+            let item = Items.itemLists[selectedUnit].items[selectedCell]
+            if item.recurrenceUnit == -1 {
+                fingerTutorial(position: recognizer.location(in: view).y, isReminder: false)
+            }
             UIView.animate(withDuration: 0.25) {
                 self.tableView.alpha = 1
             }
@@ -443,6 +488,9 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     @objc func removeTask(recognizer: UIPanGestureRecognizer)
     {
         cancelOtherTouches(recognizer: recognizer)
+        if let image = handImage {
+            image.removeFromSuperview()
+        }
 
         let panRightMax : CGFloat = 140.0
         let panLeftMax : CGFloat = -140.0
@@ -541,6 +589,10 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     
     @objc func didLongPressCell (recognizer: UILongPressGestureRecognizer) {
         cancelOtherTouches(recognizer: recognizer)
+        if let image = handImage {
+            image.removeFromSuperview()
+        }
+
         switch recognizer.state {
         case .began:
             view.endEditing(true)
@@ -735,6 +787,9 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             if editingTextField {
                 return
             }
+            if let image = handImage {
+                image.removeFromSuperview()
+            }
             collectionViewMenuMode = true
             cancelOtherTouches(recognizer: recognizer)
             
@@ -747,7 +802,9 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             
             let cell = collectionView.cellForItem(at: IndexPath(item: tempUnit, section:0)) as! ListCell
             cell.layer.borderWidth = 1.0
-            cell.layer.borderColor = UIColor.blue.cgColor
+            if let color = cell.ListField.textColor {
+                cell.layer.borderColor = color.cgColor
+            }
             let menu = UIMenuController.shared
             
                 self.becomeFirstResponder()
@@ -813,7 +870,9 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             self.collectionView.scrollToItem(at: IndexPath(item: self.selectedUnit, section: 0), at: .left, animated: true)
             if let cell = self.collectionView.cellForItem(at: IndexPath(row: self.selectedUnit, section: 0)) as? ListCell {
                 cell.layer.borderWidth = 1.0
-                cell.layer.borderColor = UIColor.blue.cgColor
+                if let color = cell.ListField.textColor {
+                    cell.layer.borderColor = color.cgColor
+                }
             }
             self.collectionView.reloadData()
             self.tableView.reloadData()
@@ -871,12 +930,15 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         
         let cells = collectionView.numberOfItems(inSection: 0)
         
+        let colors = [UIColor.blue, UIColor.orange, UIColor.purple, UIColor.brown, UIColor.magenta, UIColor.darkGray]
+        
         if (indexPath.row == cells - 1) {
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "AddList", for: indexPath) as! AddList
             return cell
         } else {
             
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "ListCell", for: indexPath) as! ListCell
+            cell.ListField.textColor = colors[indexPath.row % 6]
             cell.ListField.delegate = self
             cell.ListField.text = Items.itemLists[indexPath.row].label
             if (cell.ListField.text != nil && cell.ListField.text != "") {
@@ -893,7 +955,9 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 cell.backgroundColor = UIColor.clear
             }
             cell.layer.borderWidth = indexPath.row == selectedUnit ? 1.0 : 0.0
-            cell.layer.borderColor = indexPath.row == selectedUnit ? UIColor.blue.cgColor : UIColor.lightGray.cgColor
+            if let color = cell.ListField.textColor {
+                cell.layer.borderColor = indexPath.row == selectedUnit ? color.cgColor : UIColor.lightGray.cgColor
+            }
 
             if let dCell = dropCell, dCell == indexPath.row {
                 UIView.animate(withDuration: 0.3) {
@@ -923,7 +987,9 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             if !editingTextField {
                 selectedUnit = indexPath.row
             }
-        
+            if let image = handImage {
+                image.removeFromSuperview()
+            }
             collectionView.reloadData()
             collectionView.collectionViewLayout.invalidateLayout()
             tableView.reloadData()
@@ -935,6 +1001,12 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     }
     
     func textFieldDidBeginEditing(_ textField: UITextField) {
+        textField.autocorrectionType = .no
+        textField.autocapitalizationType = .none
+        textField.spellCheckingType = .no
+        if let image = handImage {
+            image.removeFromSuperview()
+        }
         if !DatePicker.isHidden || collectionViewMenuMode {
             textField.resignFirstResponder()
             return
@@ -1264,6 +1336,64 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         if !DatePicker.isHidden {
             recognizer.isEnabled = false
             recognizer.isEnabled = true
+        }
+    }
+    
+    func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
+        if let image = handImage {
+            image.removeFromSuperview()
+        }
+    }
+    
+    func fingerTutorial(position: CGFloat, isReminder: Bool) {
+        if animationInProgress {
+            return
+        }
+        animationInProgress = true
+        
+        if let cell = tableView.cellForRow(at: IndexPath(row: selectedCell, section: 0)) as? TaskCell {
+            handImage = UIImageView(image: UIImage(named: "fingerpoint"))
+            tableView.addSubview(handImage)
+            tableView.bringSubview(toFront: handImage)
+            handImage.alpha = 0.0
+            handImage.translatesAutoresizingMaskIntoConstraints = false
+            handImage.heightAnchor.constraint(equalToConstant: 64).isActive = true
+            handImage.widthAnchor.constraint(equalToConstant: 50).isActive = true
+            let topConstraint = handImage.topAnchor.constraint(equalTo: cell.topAnchor, constant: 25)
+            
+            var sideConstraint: NSLayoutConstraint
+            if isReminder {
+                sideConstraint = handImage.leftAnchor.constraint(equalTo: cell.leftAnchor, constant: 5)
+            } else {
+                sideConstraint = handImage.rightAnchor.constraint(equalTo: cell.rightAnchor, constant: isReminder ? 5 : -2)
+            }
+            topConstraint.isActive = true
+            sideConstraint.isActive = true
+            
+            let isTop = position < UIScreen.main.bounds.height / 2
+            
+            
+            UIView.animate(withDuration: 1.0, animations: {
+                self.handImage.alpha = 1.0
+            }, completion: { _ in
+                sideConstraint.constant = isReminder ? 165 : -165
+                UIView.animate(withDuration: 1.0, animations: {
+                    self.view.layoutIfNeeded()
+                }, completion: { _ in
+                    topConstraint.constant = isTop ? 185 : -135
+                    UIView.animate(withDuration: 1.0, animations: {
+                        self.view.layoutIfNeeded()
+                    }, completion: { _ in
+                        UIView.animate(withDuration: 1.0, animations: {
+                            self.handImage.alpha = 0.0
+                        }, completion: { _ in
+                            self.animationInProgress = false
+                            self.handImage.removeFromSuperview()
+                        })
+                    })
+                })
+            })
+            
         }
     }
 }
