@@ -15,7 +15,7 @@ class SupportViewController: UIViewController, MFMailComposeViewControllerDelega
         if MFMailComposeViewController.canSendMail() {
             let mail = MFMailComposeViewController()
             mail.mailComposeDelegate = self
-            mail.setToRecipients(["solodavestudios@gmail.com"])
+            mail.setToRecipients(["Support <solodavestudios@gmail.com>"])
             mail.setSubject("Report Issue")
             mail.setMessageBody("<p>Dear Support,</p>", isHTML: true)
             present(mail, animated: true, completion: nil)
@@ -32,5 +32,9 @@ class SupportViewController: UIViewController, MFMailComposeViewControllerDelega
         
         // Dismiss the mail compose view controller.
         controller.dismiss(animated: true, completion: nil)
+    }
+    @IBAction func rateApp(_ sender: UIButton) {
+        UIApplication.shared.open(URL(string: "https://itunes.apple.com/us/app/its-go-time/id1357722489?ls=1&mt=8")!, options: [:], completionHandler: nil)
+
     }
 }

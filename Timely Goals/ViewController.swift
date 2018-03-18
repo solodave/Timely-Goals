@@ -257,7 +257,11 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     
     @objc func updateDate() {
         let item = Items.itemLists[selectedUnit].items[selectedCell]
-        item.reminderDate = DatePicker.date
+        let gregorian = Calendar(identifier: .gregorian)
+        var components = gregorian.dateComponents([.year, .month, .day, .hour, .minute, .second], from: DatePicker.date)
+        components.second = 0
+        item.reminderDate = gregorian.date(from: components)!
+        
         tableView.reloadRows(at: [IndexPath(row: selectedCell, section: 0)], with: .none)
         createPushNotification(item: item)
     }
@@ -352,6 +356,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         
         switch recognizer.state {
         case .began:
+            self.view.isUserInteractionEnabled = false
             components = gregorian.dateComponents([.year, .month, .day, .hour, .minute, .second], from: Date())
             selectedCell = tableCellCheck(recognizer: recognizer)
             selectedTableCell = tableView.cellForRow(at: IndexPath(item: selectedCell, section: 0)) as! TaskCell
@@ -393,6 +398,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             let dateString = formatDate(wrappedDate: item.reminderDate) ?? ""
             PanInstructions.text = "←12 hours→\n↑30 min↓\n" + dateString
         case .ended:
+            self.view.isUserInteractionEnabled = true
             UIView.animate(withDuration: 0.2) {
                 self.tableView.alpha = 1
             }
@@ -438,6 +444,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         
         switch recognizer.state {
         case .began:
+            view.isUserInteractionEnabled = false
             item.isRecurring = true
             let halfHeight = UIScreen.main.bounds.height / 2
             if (recognizer.location(in: view).y < halfHeight) {
@@ -471,6 +478,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 PanInstructions.text = "←Period→\n↑Frequency↓\n\(recurString)"
             }
         case .ended:
+            view.isUserInteractionEnabled = true
             let item = Items.itemLists[selectedUnit].items[selectedCell]
             if item.recurrenceUnit == -1 {
                 fingerTutorial(position: recognizer.location(in: view).y, isReminder: false)
@@ -496,6 +504,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         let panLeftMax : CGFloat = -140.0
         switch recognizer.state {
         case .began:
+            view.isUserInteractionEnabled = false
             if (recognizer.view != nil) {
                 view.endEditing(true)
                 setCells(recognizer: recognizer)
@@ -529,6 +538,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             }
             selectedTableCell.LabelWrapperConstraint.constant = panAmount
         case .ended:
+            view.isUserInteractionEnabled = true
             panLocation = nil
             if (panAmount > panRightMax || panAmount < panLeftMax) {
                 let edge = panAmount > panRightMax ? UIScreen.main.bounds.width : -UIScreen.main.bounds.width
@@ -595,6 +605,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
 
         switch recognizer.state {
         case .began:
+            view.isUserInteractionEnabled = false
             view.endEditing(true)
             if recognizer.view != nil  {
             
@@ -719,6 +730,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 }
             }
         case .ended:
+            view.isUserInteractionEnabled = true
             tempCell = selectedCell
             if (dragLabel == nil) { return }
             //dragTopConstraint.isActive = false
@@ -1001,9 +1013,6 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     }
     
     func textFieldDidBeginEditing(_ textField: UITextField) {
-        textField.autocorrectionType = .no
-        textField.autocapitalizationType = .none
-        textField.spellCheckingType = .no
         if let image = handImage {
             image.removeFromSuperview()
         }
