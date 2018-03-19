@@ -13,6 +13,11 @@ import StoreKit
 
 class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, UITextFieldDelegate, UIGestureRecognizerDelegate, UNUserNotificationCenterDelegate, UIScrollViewDelegate {
     
+    var undoCell = 0
+    var undoItem: Item?
+    var undoTask: DispatchWorkItem!
+    @IBOutlet var undoButton: UIButton!
+    
     var animationInProgress = false
     var handImage: UIImageView!
     
@@ -79,11 +84,13 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         
         bannerView = GADBannerView(adSize: kGADAdSizeSmartBannerPortrait)
         // TEST UNIT
-        bannerView.adUnitID = "ca-app-pub-3940256099942544/2934735716"
+        //bannerView.adUnitID = "ca-app-pub-3940256099942544/2934735716"
         
+        // LIVE UNIT
+        bannerView.adUnitID = "ca-app-pub-7472837864402298/4573299285"
         bannerView.rootViewController = self
         addBannerViewToView(bannerView)
-        
+        //bannerView.load(GADRequest())
         let request = GADRequest()
         // TEST
         request.testDevices = ["ea221b24268abe25327e221c72a03f9f"]
@@ -348,7 +355,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         }
         
         let widthIncrement = UIScreen.main.bounds.width / 6
-        let heightIncrement = UIScreen.main.bounds.height / 24
+        let heightIncrement = UIScreen.main.bounds.height / 48
         
         currX = Int(floor(recognizer.location(in: view).x / widthIncrement))
         currY = Int(floor(recognizer.location(in: view).y / heightIncrement))
@@ -363,7 +370,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             
             let item = Items.itemLists[selectedUnit].items[selectedCell]
             let dateString = formatDate(wrappedDate: item.reminderDate) ?? ""
-            PanInstructions.text = "←12 hours→\n↑30 min↓\n" + dateString
+            PanInstructions.text = "←12 hours→\n↑15 min↓\n" + dateString
             let halfHeight = UIScreen.main.bounds.height / 2
             if (recognizer.location(in: view).y < halfHeight) {
                 PanInstructionsXPosition.constant = halfHeight - 100
@@ -375,11 +382,11 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 self.tableView.alpha = 0.15
             }
             PanInstructions.isHidden = false
-            PanInstructions.text = "←12 hours→\n↑30 min↓\n"
+            PanInstructions.text = "←12 hours→\n↑15 min↓\n"
         case .changed:
             components = gregorian.dateComponents([.year, .month, .day, .hour, .minute, .second], from: Date())
-            components.hour = (currX * 12) + (currY / 2)
-            components.minute = (currY % 2) * 30
+            components.hour = (currX * 12) + (currY / 4)
+            components.minute = (currY % 4) * 15
             components.second = 0
             let item = Items.itemLists[selectedUnit].items[selectedCell]
             item.reminderDate = gregorian.date(from: components)!
@@ -396,7 +403,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 self.view.layoutIfNeeded()
             }
             let dateString = formatDate(wrappedDate: item.reminderDate) ?? ""
-            PanInstructions.text = "←12 hours→\n↑30 min↓\n" + dateString
+            PanInstructions.text = "←12 hours→\n↑15 min↓\n" + dateString
         case .ended:
             self.view.isUserInteractionEnabled = true
             UIView.animate(withDuration: 0.2) {
@@ -569,11 +576,17 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                             self.tableView.reloadRows(at: [IndexPath(row: self.selectedCell, section: 0)], with: .none)
                         })
                     } else {
+                        
+                        self.undoItem = item
+                        self.undoCell = self.selectedCell
+                        
                         self.Items.itemLists[self.selectedUnit].items.remove(at: self.selectedCell)
                         self.tableView.deleteRows(at: [IndexPath(row: self.selectedCell, section: 0)], with: .automatic)
                         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [String(item.id)])
                         UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: [String(item.id)])
                         UIApplication.shared.applicationIconBadgeNumber = self.overdueTasks()
+                        
+                        self.createUndoButton()
                     }
                     
                     
@@ -723,7 +736,9 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                         originalOrigin.y += tableCell.frame.height * (selectedCell > i ? -1 : 1)
                         selectedCell = i
                         selectedTableCell.alpha = 1.0
-                        selectedTableCell = tableView.cellForRow(at: IndexPath(item: selectedCell, section: 0)) as! TaskCell
+                        if let cell = tableView.cellForRow(at: IndexPath(item: selectedCell, section: 0)) as? TaskCell {
+                            selectedTableCell = cell
+                        }
                         selectedTableCell.alpha = 0.0
                         break
                     }
@@ -775,7 +790,6 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             }
             
             if (!isIntersection) {
-                let item = Items.itemLists[selectedUnit].items[selectedCell]
                 selectedTableCell.isHidden = false
                 UIView.animate(withDuration: 0.3, animations: { () -> Void in
                     self.dragLabel?.frame.origin = self.originalOrigin
@@ -882,8 +896,11 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             self.collectionView.scrollToItem(at: IndexPath(item: self.selectedUnit, section: 0), at: .left, animated: true)
             if let cell = self.collectionView.cellForItem(at: IndexPath(row: self.selectedUnit, section: 0)) as? ListCell {
                 cell.layer.borderWidth = 1.0
-                if let color = cell.ListField.textColor {
-                    cell.layer.borderColor = color.cgColor
+                if let indexPath = self.collectionView.indexPath(for: cell) {
+                    cell.ListField.textColor = self.Items.itemLists[indexPath.row].color
+                    if let color = cell.ListField.textColor {
+                        cell.layer.borderColor = color.cgColor
+                    }
                 }
             }
             self.collectionView.reloadData()
@@ -942,15 +959,13 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         
         let cells = collectionView.numberOfItems(inSection: 0)
         
-        let colors = [UIColor.blue, UIColor.orange, UIColor.purple, UIColor.brown, UIColor.magenta, UIColor.darkGray]
-        
         if (indexPath.row == cells - 1) {
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "AddList", for: indexPath) as! AddList
             return cell
         } else {
             
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "ListCell", for: indexPath) as! ListCell
-            cell.ListField.textColor = colors[indexPath.row % 6]
+            cell.ListField.textColor = Items.itemLists[indexPath.row].color
             cell.ListField.delegate = self
             cell.ListField.text = Items.itemLists[indexPath.row].label
             if (cell.ListField.text != nil && cell.ListField.text != "") {
@@ -1002,9 +1017,14 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             if let image = handImage {
                 image.removeFromSuperview()
             }
+            if let task = undoTask {
+                task.cancel()
+            }
+            undoButton.isHidden = true
             collectionView.reloadData()
             collectionView.collectionViewLayout.invalidateLayout()
             tableView.reloadData()
+            tableView.scrollToRow(at: IndexPath(row: 0, section: 0), at: .top, animated: false)
         }
     }
     
@@ -1013,6 +1033,11 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     }
     
     func textFieldDidBeginEditing(_ textField: UITextField) {
+        if textField.tag == 99 {
+            textField.autocorrectionType = .no
+        } else {
+            textField.autocorrectionType = .yes
+        }
         if let image = handImage {
             image.removeFromSuperview()
         }
@@ -1037,11 +1062,15 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 collectionView.reloadData()
                 tableView.reloadData()
             } else {
-                Items.itemLists.remove(at: selectedUnit)
+                if  Items.itemLists[selectedUnit].label != "" {
+                    textField.text = Items.itemLists[selectedUnit].label
+                } else {
+                    Items.itemLists.remove(at: selectedUnit)
 
-                collectionView.deleteItems(at: [IndexPath(item:selectedUnit, section:0)])
-                selectedUnit = tempUnit
-                collectionView.reloadData()
+                    collectionView.deleteItems(at: [IndexPath(item:selectedUnit, section:0)])
+                    selectedUnit = tempUnit
+                    collectionView.reloadData()
+                }
             }
         } else {
             if let text = textField.text, text != "" {
@@ -1282,6 +1311,9 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             return
         }
         for list in Items.itemLists {
+            if list.items.count == 0 {
+                continue
+            }
             for i in 0...list.items.count - 1 {
                 let item = list.items[i]
                 if item.id == response.notification.request.identifier {
@@ -1352,6 +1384,32 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         if let image = handImage {
             image.removeFromSuperview()
         }
+    }
+    
+    func createUndoButton() {
+        undoButton.isHidden = false
+        undoButton.alpha = 1.0
+        if let task = undoTask {
+            task.cancel()
+        }
+        undoTask = DispatchWorkItem { UIView.animate(withDuration: 1.0, animations: {
+            self.undoButton.alpha = 0.0
+        }, completion: { _ in
+            self.undoButton.isHidden = true
+        })}
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 9, execute: undoTask)
+        
+    }
+    
+    @IBAction func undoDeleteTask() {
+        if let item = undoItem {
+            Items.itemLists[selectedUnit].items.insert(item, at: undoCell)
+            tableView.insertRows(at: [IndexPath(row: undoCell, section: 0)], with: .automatic)
+            createPushNotification(item: item)
+        }
+        undoButton.isHidden = true
+        undoTask.cancel()
     }
     
     func fingerTutorial(position: CGFloat, isReminder: Bool) {

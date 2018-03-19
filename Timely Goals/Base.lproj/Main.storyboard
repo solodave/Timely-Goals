@@ -291,6 +291,21 @@
                                     <segue destination="xaU-kE-IpR" kind="presentation" id="yaY-0o-3lA"/>
                                 </connections>
                             </button>
+                            <button hidden="YES" opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="BXU-cE-nDR" userLabel="Undo Button">
+                                <rect key="frame" x="240" y="20" width="70" height="40"/>
+                                <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="calibratedRGB"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" constant="70" id="245-O9-3SK"/>
+                                    <constraint firstAttribute="height" constant="40" id="ZtM-eY-8M0"/>
+                                </constraints>
+                                <fontDescription key="fontDescription" name="KannadaSangamMN" family="Kannada Sangam MN" pointSize="17"/>
+                                <state key="normal" title="Undo">
+                                    <color key="titleColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                                </state>
+                                <connections>
+                                    <action selector="undoDeleteTask" destination="BYZ-38-t0r" eventType="touchUpInside" id="XRn-DN-umq"/>
+                                </connections>
+                            </button>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                         <constraints>
@@ -302,15 +317,19 @@
                             <constraint firstItem="Gsz-58-tBV" firstAttribute="top" secondItem="6Tk-OE-BBY" secondAttribute="top" id="Id7-a4-9Ia"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="lpB-6s-O2K" secondAttribute="trailing" id="Oya-Gf-wEw"/>
                             <constraint firstItem="Gsz-58-tBV" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" constant="20" symbolic="YES" id="PAj-Kw-VB8"/>
+                            <constraint firstItem="BXU-cE-nDR" firstAttribute="top" secondItem="6Tk-OE-BBY" secondAttribute="top" id="QbD-CI-Vgl"/>
                             <constraint firstItem="7PL-Dn-LE8" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" id="R6G-5A-t2L"/>
                             <constraint firstItem="b0v-XL-Ht0" firstAttribute="top" secondItem="Ei6-fm-ZJ0" secondAttribute="bottom" id="S5O-cd-jcj"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="Ei6-fm-ZJ0" secondAttribute="trailing" id="Set-qI-hAn"/>
                             <constraint firstItem="b0v-XL-Ht0" firstAttribute="trailing" secondItem="6Tk-OE-BBY" secondAttribute="trailing" id="SwO-k3-Csk"/>
+                            <constraint firstAttribute="trailing" secondItem="L6x-cJ-ecA" secondAttribute="trailing" constant="10" id="U6z-aM-lcv"/>
                             <constraint firstItem="L6x-cJ-ecA" firstAttribute="top" secondItem="6Tk-OE-BBY" secondAttribute="top" id="YL8-dM-XAy"/>
+                            <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="BXU-cE-nDR" secondAttribute="trailing" constant="10" id="YLu-HC-NO4"/>
                             <constraint firstItem="7PL-Dn-LE8" firstAttribute="top" secondItem="b0v-XL-Ht0" secondAttribute="bottom" id="ZEZ-Mw-BoV"/>
                             <constraint firstItem="lpB-6s-O2K" firstAttribute="centerX" secondItem="8bC-Xf-vdC" secondAttribute="centerX" id="ZKt-aF-6eR"/>
                             <constraint firstItem="7PL-Dn-LE8" firstAttribute="trailing" secondItem="6Tk-OE-BBY" secondAttribute="trailing" id="c19-oZ-CgN"/>
                             <constraint firstItem="lpB-6s-O2K" firstAttribute="centerY" secondItem="8bC-Xf-vdC" secondAttribute="centerY" id="iCu-4s-3qy"/>
+                            <constraint firstItem="BXU-cE-nDR" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="8bC-Xf-vdC" secondAttribute="leading" constant="20" symbolic="YES" id="nWN-2r-kOA"/>
                             <constraint firstItem="Ei6-fm-ZJ0" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" id="nzw-JB-vHQ"/>
                             <constraint firstItem="b0v-XL-Ht0" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" id="prz-4C-ekV"/>
                         </constraints>
@@ -327,6 +346,7 @@
                         <outlet property="collectionView" destination="L6x-cJ-ecA" id="L36-tH-2OT"/>
                         <outlet property="tableBottom" destination="7P2-IG-fgY" id="eYX-CN-VAG"/>
                         <outlet property="tableView" destination="b0v-XL-Ht0" id="5Sz-ry-V5I"/>
+                        <outlet property="undoButton" destination="BXU-cE-nDR" id="FRm-4I-OCA"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
@@ -363,33 +383,33 @@
                                     <action selector="dismiss:" destination="xaU-kE-IpR" eventType="touchUpInside" id="cdB-pk-1Qh"/>
                                 </connections>
                             </button>
-                            <scrollView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="owJ-lD-EBD">
+                            <scrollView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" showsHorizontalScrollIndicator="NO" showsVerticalScrollIndicator="NO" translatesAutoresizingMaskIntoConstraints="NO" id="owJ-lD-EBD">
                                 <rect key="frame" x="20" y="90" width="280" height="478"/>
                                 <subviews>
                                     <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="rci-wL-TnB">
                                         <rect key="frame" x="0.0" y="0.0" width="280" height="453.5"/>
                                         <subviews>
-                                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="sAS-vT-u2w">
+                                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="sAS-vT-u2w">
                                                 <rect key="frame" x="0.0" y="0.0" width="280" height="453.5"/>
-                                                <string key="text">-Push clock and pan to set reminder time
+                                                <string key="text">Push clock and pan to set reminder time
 
--Push arrows and pan to set recurrence period
+Push arrows and pan to set recurrence period
 
--Hold task and drag to change position
+Hold task and drag to change position
 
--You can drag and drop task into other list
+You can drag and drop task into other list
 
--Swipe right to delete
+Swipe right to delete
 
--Swipe left to delete instance of recurring task
+Swipe left to delete instance of recurring task
 
--Pinch task to set precise time
+Pinch task to set precise time
 
--Hold list name to rename or delete
+Hold list name to rename or delete
 
--Push remind button to disable reminder
+Push remind button to disable reminder
 
--Push recurrence button to disable recurrence</string>
+Push recurrence button to disable recurrence</string>
                                                 <fontDescription key="fontDescription" name="KannadaSangamMN" family="Kannada Sangam MN" pointSize="16"/>
                                                 <nil key="textColor"/>
                                                 <nil key="highlightedColor"/>
