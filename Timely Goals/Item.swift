@@ -35,9 +35,9 @@ class Item: NSObject, NSCoding {
     }
     
     required init(coder aDecoder: NSCoder) {
-        label = aDecoder.decodeObject(forKey: "label") as! String
+        label = aDecoder.decodeObject(forKey: "label") as? String ?? "Unnamed task"
         reminderDate = aDecoder.decodeObject(forKey: "reminderDate") as? Date
-        id = aDecoder.decodeObject(forKey: "id") as! String
+        id = aDecoder.decodeObject(forKey: "id") as? String ?? UUID().uuidString
         isRecurring = aDecoder.decodeBool(forKey: "isRecurring")
         recurrencePeriod = aDecoder.decodeInteger(forKey: "recurrencePeriod")
         recurrenceUnit = aDecoder.decodeInteger(forKey: "recurrenceUnit")

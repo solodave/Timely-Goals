@@ -12,16 +12,19 @@ import UIKit
 class ItemList: NSObject, NSCoding {
     
     
-    
+    static var colors = [UIColor.blue, UIColor.orange, UIColor.purple, UIColor.brown, UIColor.magenta, UIColor.darkGray]
     var items: [Item] = []
     var label: String = ""
     var color: UIColor = UIColor()
     
     init(label: String) {
-        let colors = [UIColor.blue, UIColor.orange, UIColor.purple, UIColor.brown, UIColor.magenta, UIColor.darkGray, UIColor.green]
         
         self.label = label
-        self.color = colors[Int(arc4random_uniform(7))]
+        
+        let it = UserDefaults.standard.integer(forKey: "currentColor")
+        
+        self.color = ItemList.colors[it]
+        UserDefaults.standard.set((it + 1) % 6, forKey: "currentColor")
     }
     
     func encode(with aCoder: NSCoder) {
@@ -31,9 +34,9 @@ class ItemList: NSObject, NSCoding {
     }
     
     required init(coder aDecoder: NSCoder) {
-        label = aDecoder.decodeObject(forKey: "label") as! String
-        items = aDecoder.decodeObject(forKey: "items") as! [Item]
-        color = aDecoder.decodeObject(forKey: "color") as! UIColor
+        label = aDecoder.decodeObject(forKey: "label") as? String ?? "Unnamed list"
+        items = aDecoder.decodeObject(forKey: "items") as? [Item] ?? []
+        color = aDecoder.decodeObject(forKey: "color") as? UIColor ?? ItemList.colors[Int(arc4random_uniform(6))]
         
         super.init()
     }

@@ -90,11 +90,11 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         bannerView.adUnitID = "ca-app-pub-7472837864402298/4573299285"
         bannerView.rootViewController = self
         addBannerViewToView(bannerView)
-        //bannerView.load(GADRequest())
-        let request = GADRequest()
+        bannerView.load(GADRequest())
+        //let request = GADRequest()
         // TEST
-        request.testDevices = ["ea221b24268abe25327e221c72a03f9f"]
-        bannerView.load(request)
+        //request.testDevices = ["ea221b24268abe25327e221c72a03f9f", kGADSimulatorID]
+        //bannerView.load(request)
         
         bannerViewHeight = bannerView.frame.height
         tableBottom.constant = -bannerViewHeight
