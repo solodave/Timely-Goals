@@ -66,7 +66,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         if (viewController.tableView != nil) {
             viewController.tableView.reloadData()
         }
-        SKStoreReviewController.requestReview()
+        let uses = UserDefaults.standard.integer(forKey: "uses")
+        if uses > 25 {
+            SKStoreReviewController.requestReview()
+            UserDefaults.standard.set(0, forKey: "uses")
+        } else {
+            UserDefaults.standard.set(uses + 1, forKey: "uses")
+        }
     }
 
     func applicationWillTerminate(_ application: UIApplication) {
